@@ -217,8 +217,32 @@ _ANCHOR_TEMPLATES: dict[str, list[str]] = {
     "scene_start": [],
 }
 
-# Scene-level narration: drives captions when anchors are sparse / non-informative.
-# Indexed by (scene_index, total_scenes). For most layouts we use the simple list.
+# Beat-level narration: drives captions on a fixed cadence regardless of scene
+# structure. Length adapts to duration. Index 0 is the "hook" right after the
+# title; last is the punchline.
+_BEAT_NARRATIONS: list[str] = [
+    "Production demo videos in one command",
+    "Capture any URL with Playwright",
+    "Auto-narrate from DOM event analysis",
+    "Compose with libass + ffmpeg",
+    "Mixed audio at −14 LUFS, YouTube-ready",
+    "No Node, no Remotion, pure Python",
+    "Faster than a webpack bundle",
+    "Schema-validated, deterministic, lean",
+]
+
+_BEAT_MOODS: list[Mood] = [
+    Mood.ANNOUNCE,
+    Mood.EXPLAIN,
+    Mood.EXPLAIN,
+    Mood.EXPLAIN,
+    Mood.PUNCHLINE,
+    Mood.EXPLAIN,
+    Mood.PUNCHLINE,
+    Mood.TAGLINE,
+]
+
+# Scene-level narration: used as fallback when no beat narration available.
 _SCENE_NARRATIONS: dict[int, list[str]] = {
     1: ["Built with dvg"],
     2: ["The pitch", "Why it works"],
@@ -243,29 +267,82 @@ def _place_captions(
     *,
     anchor_min_t: float,
     max_captions: int = 6,
+    cta_reserve: float = 1.6,
 ) -> list[CaptionLayer]:
-    """Place captions: anchor-driven where informative, scene-narrated otherwise."""
-    captions: list[CaptionLayer] = []
+    """Place captions: anchor-driven where informative, beat-paced otherwise.
 
-    # 1. Anchor-driven captions (only for high-signal kinds with templates)
+    Strategy:
+      1. Reserve CTA window at end (caller adds the CTA caption).
+      2. Anchor-driven captions for clicks/navigations/input_end (high signal).
+      3. If still under target density, fill with beat-paced narration.
+      4. Drop overlapping captions (anchor wins).
+    """
+    captions: list[CaptionLayer] = []
+    end_window = ctx.duration_s - cta_reserve  # leave room for CTA
+
+    # 1. Anchor-driven (only for informative kinds)
     rank_score = {"click": 5, "navigation": 4, "input_end": 3, "page_load": 0, "scroll_stop": 0}
     anchor_caps = _captions_from_anchors(ctx, anchor_min_t, rank_score, max_captions)
-    captions.extend(anchor_caps)
+    captions.extend([c for c in anchor_caps if c.time[1] <= end_window])
 
-    # 2. If we got fewer than 2 captions, fall back to scene narration
-    if len(captions) < 2:
-        scene_caps = _captions_from_scenes(ctx, anchor_min_t)
-        # avoid time overlap with anchor caps
+    # 2. Beat-paced if we don't have enough density (target: ~1 caption per 3s)
+    target_density = max(2, int((end_window - anchor_min_t) / 3.0))
+    if len(captions) < target_density:
+        beat_caps = _captions_from_beats(
+            ctx,
+            anchor_min_t=anchor_min_t,
+            anchor_max_t=end_window,
+            target_n=min(max_captions, target_density),
+        )
         existing = [c.time for c in captions]
-        for sc in scene_caps:
-            if not any(_overlaps(sc.time, e, slack=0.3) for e in existing):
-                captions.append(sc)
+        for bc in beat_caps:
+            if not any(_overlaps(bc.time, e, slack=0.3) for e in existing):
+                captions.append(bc)
 
-    # sort by start
+    # 3. If still under 1, fall back to scene narration
+    if not captions:
+        scene_caps = _captions_from_scenes(ctx, anchor_min_t)
+        captions.extend(scene_caps)
+
     captions.sort(key=lambda c: c.time[0])
-
-    # cap to max
     return captions[:max_captions]
+
+
+def _captions_from_beats(
+    ctx: DirectorContext,
+    *,
+    anchor_min_t: float,
+    anchor_max_t: float,
+    target_n: int,
+    cap_dur: float = 2.5,
+    gap: float = 0.4,
+) -> list[CaptionLayer]:
+    """Place `target_n` captions on an even cadence between anchor_min_t and anchor_max_t."""
+    available = anchor_max_t - anchor_min_t
+    if available <= cap_dur:
+        return []
+    n = max(2, min(target_n, int(available / (cap_dur + gap))))
+    spacing = available / n
+    out: list[CaptionLayer] = []
+    for i in range(n):
+        cap_start = anchor_min_t + i * spacing + 0.1
+        cap_end = min(anchor_max_t, cap_start + min(cap_dur, spacing - gap))
+        if cap_end - cap_start < 1.0:
+            continue
+        text = (
+            _BEAT_NARRATIONS[i] if i < len(_BEAT_NARRATIONS) else _BEAT_NARRATIONS[-1]
+        )
+        mood = _BEAT_MOODS[i] if i < len(_BEAT_MOODS) else Mood.EXPLAIN
+        out.append(
+            CaptionLayer(
+                text=text,
+                mood=mood,
+                time=(cap_start, cap_end),
+                anchor=Anchor.BOTTOM_CENTER,
+                intent_duration=cap_end - cap_start,
+            )
+        )
+    return out
 
 
 def _captions_from_anchors(

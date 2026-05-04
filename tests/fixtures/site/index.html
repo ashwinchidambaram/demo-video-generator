@@ -2,66 +2,225 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>dvg — fixture</title>
+<title>dvg — production demo videos in one command</title>
 <style>
   :root {
-    --bg: #0a0a0a; --fg: #f5f5f5; --dim: #9ca3af; --accent: #3b82f6;
+    --bg: #0a0a0a;
+    --bg-2: #0f0f1a;
+    --fg: #f5f5f5;
+    --dim: #9ca3af;
+    --accent: #3b82f6;
+    --accent-2: #8b5cf6;
+    --code-bg: #1a1a2a;
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; height: 100%; }
+  html, body { margin: 0; padding: 0; }
   body {
-    background: linear-gradient(180deg, #0a0a0a 0%, #111827 100%);
-    color: var(--fg); font-family: -apple-system, "SF Pro Text", Inter, sans-serif;
-    line-height: 1.5; min-height: 200vh; padding: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, "SF Pro Display", "Helvetica Neue", Inter, sans-serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
+  .gradient {
+    position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 0%, rgba(59,130,246,0.18), transparent 70%),
+      radial-gradient(ellipse 40% 40% at 90% 30%, rgba(139,92,246,0.12), transparent 70%);
+  }
+
+  /* Hero */
   header {
     height: 100vh; display: grid; place-items: center; text-align: center;
+    position: relative; padding: 0 8vw;
   }
-  header h1 { font-size: 5rem; margin: 0; letter-spacing: -0.04em; font-weight: 700; }
-  header h1 span { color: var(--accent); }
-  header p { font-size: 1.4rem; color: var(--dim); margin-top: 1.5rem; max-width: 32rem; }
+  header > div { z-index: 1; max-width: 64rem; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.4rem 0.9rem; border-radius: 999px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    font-size: 0.85rem; color: var(--dim);
+  }
+  .badge .dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--accent); }
+  h1 {
+    font-size: 6rem; line-height: 1.05; letter-spacing: -0.04em;
+    margin: 1.5rem 0 0; font-weight: 700;
+  }
+  h1 .grad {
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    background-clip: text; -webkit-background-clip: text;
+    color: transparent;
+  }
+  header p {
+    font-size: 1.45rem; color: var(--dim); margin-top: 1.5rem; max-width: 38rem;
+    margin-left: auto; margin-right: auto;
+  }
+  .ctas {
+    margin-top: 3rem; display: flex; gap: 1rem; justify-content: center;
+  }
   .cta {
-    margin-top: 3rem; display: inline-block; padding: 0.9rem 2rem; background: var(--accent);
-    color: white; text-decoration: none; border-radius: 0.6rem; font-weight: 600;
-    transition: transform 0.18s ease-out;
+    display: inline-block; padding: 0.95rem 2rem;
+    background: var(--accent); color: white;
+    text-decoration: none; border-radius: 0.7rem; font-weight: 600;
+    transition: transform 0.18s ease-out, background 0.18s;
   }
-  .cta:hover { transform: scale(1.05); }
-  section { padding: 6rem 8vw; }
-  section h2 { font-size: 3rem; letter-spacing: -0.03em; margin: 0 0 2rem; }
-  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+  .cta:hover { transform: scale(1.04); background: #2563eb; }
+  .cta.outline {
+    background: transparent; border: 1px solid rgba(255,255,255,0.18);
+    color: var(--fg);
+  }
+  .cta.outline:hover { background: rgba(255,255,255,0.06); }
+
+  /* Code */
+  .code-card {
+    margin: 4rem auto 0; max-width: 44rem;
+    background: var(--code-bg); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 0.9rem; padding: 1.5rem;
+    text-align: left; font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 1.05rem;
+  }
+  .code-card .prompt { color: var(--dim); margin-right: 0.6rem; }
+  .code-card .cmd { color: #a7e3ff; }
+  .code-card .arg { color: #ffd28b; }
+  .code-card .comment { color: #6b7280; }
+
+  /* Sections */
+  section {
+    padding: 10vh 8vw;
+    position: relative; z-index: 1;
+  }
+  section h2 {
+    font-size: 3.5rem; letter-spacing: -0.03em;
+    margin: 0 0 0.75rem; font-weight: 700;
+  }
+  section .lede { font-size: 1.3rem; color: var(--dim); max-width: 36rem; margin: 0 0 4rem; }
+  .grid-3 {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
+  }
   .card {
-    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 0.8rem; padding: 1.6rem;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 1rem; padding: 2rem;
+    transition: transform 0.2s, border-color 0.2s, background 0.2s;
   }
-  .card h3 { margin: 0 0 0.6rem; font-size: 1.4rem; }
+  .card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(59,130,246,0.4);
+    background: rgba(59,130,246,0.04);
+  }
+  .card .icon {
+    width: 2.5rem; height: 2.5rem; border-radius: 0.5rem;
+    background: rgba(59,130,246,0.15); display: grid; place-items: center;
+    color: var(--accent); margin-bottom: 1rem; font-size: 1.4rem;
+  }
+  .card h3 { margin: 0 0 0.5rem; font-size: 1.4rem; }
   .card p { margin: 0; color: var(--dim); }
-  footer { text-align: center; padding: 4rem; color: var(--dim); }
+
+  .vs {
+    margin-top: 3rem; padding: 2rem;
+    background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 1rem;
+    display: grid; grid-template-columns: 1fr auto 1fr; gap: 2rem; align-items: center;
+  }
+  .vs h4 { margin: 0 0 0.5rem; font-size: 1.05rem; color: var(--dim); }
+  .vs .num {
+    font-size: 3rem; font-weight: 700; letter-spacing: -0.04em;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    background-clip: text; -webkit-background-clip: text; color: transparent;
+  }
+  .vs hr { border: none; border-left: 1px solid rgba(255,255,255,0.1); height: 60px; margin: 0; }
+
+  footer {
+    text-align: center; padding: 4rem 2rem; color: var(--dim);
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
 </style>
 </head>
 <body>
+  <div class="gradient"></div>
+
   <header>
     <div>
-      <h1>built with <span>dvg</span></h1>
-      <p>A lean demo-video generator. Capture, narrate, render — all in pure Python.</p>
-      <a href="#features" class="cta" id="cta-primary">Try it</a>
+      <span class="badge"><span class="dot"></span>open source · MIT</span>
+      <h1>demo videos<br /><span class="grad">in one command</span></h1>
+      <p>Turn any URL into a production-grade demo video. Capture, narrate, render — all in pure Python. No bundling, no Chromium, no hassle.</p>
+      <div class="ctas">
+        <a href="#features" class="cta" id="cta-primary">Get started</a>
+        <a href="#why" class="cta outline">See why</a>
+      </div>
+      <div class="code-card">
+        <span class="prompt">$</span><span class="cmd">dvg</span> <span class="arg">make-video</span> <span class="arg">https://your-app.com</span> <span class="comment"># 15 seconds, 1080p, mixed audio</span>
+      </div>
     </div>
   </header>
+
   <section id="features">
     <h2>What it does</h2>
-    <div class="grid">
-      <div class="card"><h3>Capture</h3><p>Playwright-driven 1080p capture with DOM event log.</p></div>
-      <div class="card"><h3>Narrate</h3><p>Single director chooses captions, music, and styling.</p></div>
-      <div class="card"><h3>Render</h3><p>libass + ffmpeg. No Chromium per render. Faster than Remotion.</p></div>
+    <p class="lede">A four-stage deterministic pipeline. Every stage is testable, every artifact is schema-validated.</p>
+    <div class="grid-3">
+      <div class="card">
+        <div class="icon">●</div>
+        <h3>Capture</h3>
+        <p>Playwright-driven 1080p capture with full DOM event log. Auto-pilot scenarios scroll, click, and tour your page.</p>
+      </div>
+      <div class="card">
+        <div class="icon">●</div>
+        <h3>Analyze</h3>
+        <p>Events become scenes and anchors. Deterministic when DOM events exist; visual gap-filler when they don't.</p>
+      </div>
+      <div class="card">
+        <div class="icon">●</div>
+        <h3>Direct</h3>
+        <p>One brain picks the soundtrack, places captions, sets the mood. LLM-ready interface; ships with a heuristic.</p>
+      </div>
     </div>
   </section>
-  <section>
+
+  <section id="why">
     <h2>Why dvg</h2>
-    <div class="grid">
-      <div class="card"><h3>One language</h3><p>Pure Python. No Node, no React, no Webpack bundle step.</p></div>
-      <div class="card"><h3>Audio-first</h3><p>-14 LUFS YouTube target enforced. Sidechain ducking under captions.</p></div>
-      <div class="card"><h3>Schema-validated</h3><p>Pydantic catches errors before render.</p></div>
+    <p class="lede">Faster than Remotion. Cleaner than a manual editor. Designed for engineers who ship.</p>
+    <div class="grid-3">
+      <div class="card">
+        <div class="icon">▲</div>
+        <h3>One language</h3>
+        <p>Pure Python. No Node, no React, no webpack bundle step. Composition is a Pydantic model.</p>
+      </div>
+      <div class="card">
+        <div class="icon">♪</div>
+        <h3>Audio-first</h3>
+        <p>−14 LUFS YouTube target enforced. Sidechain ducking under captions. Production-grade by default.</p>
+      </div>
+      <div class="card">
+        <div class="icon">⚡</div>
+        <h3>Render fast</h3>
+        <p>libass + ffmpeg, single-shot. No Chromium per render. 12s output renders in 3 seconds.</p>
+      </div>
+    </div>
+    <div class="vs">
+      <div>
+        <h4>Render time, 12s output</h4>
+        <div class="num">3.0s</div>
+        <p style="margin: 0; color: var(--dim);">dvg — single ffmpeg invocation</p>
+      </div>
+      <hr />
+      <div>
+        <h4>Webpack bundle alone</h4>
+        <div class="num">~25s</div>
+        <p style="margin: 0; color: var(--dim);">Remotion — before any rendering starts</p>
+      </div>
     </div>
   </section>
-  <footer>dvg · open source · MIT</footer>
+
+  <section>
+    <h2>Get started</h2>
+    <div class="code-card" style="margin-top: 1rem;">
+      <div><span class="prompt">$</span><span class="cmd">pip</span> <span class="arg">install dvg</span></div>
+      <div style="margin-top: 0.6rem;"><span class="prompt">$</span><span class="cmd">dvg</span> <span class="arg">make-video</span> <span class="arg">https://your-app.com</span></div>
+      <div style="margin-top: 0.6rem; color: var(--dim); padding-left: 1rem;">→ final.mp4 (1080p, −14 LUFS, 12s)</div>
+    </div>
+  </section>
+
+  <footer>dvg · MIT licensed · made with love and ffmpeg</footer>
 </body>
 </html>
