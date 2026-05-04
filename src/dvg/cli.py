@@ -361,6 +361,141 @@ def make_video(
     )
 
 
+@app.command()
+def new(
+    out: Annotated[
+        Path, typer.Argument(help="Path to write a starter composition.json or .py")
+    ],
+    duration: Annotated[float, typer.Option("--duration", "-d")] = 12.0,
+    style: Annotated[
+        str, typer.Option("--style", help="json | py")
+    ] = "json",
+) -> None:
+    """Scaffold a starter composition file."""
+    if style == "json":
+        from dvg.models import (
+            AudioLayer,
+            CaptionLayer,
+            Composition,
+            Mood,
+            TitleLayer,
+            VideoLayer,
+        )
+
+        # We can't reference real files; emit a template the user can edit.
+        template = Composition(
+            fps=30,
+            width=1920,
+            height=1080,
+            duration=duration,
+            background="#0a0a0a",
+            layers=[
+                TitleLayer(
+                    title="My demo",
+                    subtitle="built with dvg",
+                    time=(0.0, 2.5),
+                    fade_in=0.4,
+                    fade_out=0.4,
+                ),
+                VideoLayer(
+                    src=Path("footage.mp4"),  # replace
+                    time=(2.3, duration - 1.5),
+                    fit="cover",
+                    fade_in=0.4,
+                    fade_out=0.4,
+                ),
+                CaptionLayer(
+                    text="Your first caption",
+                    mood=Mood.ANNOUNCE,
+                    time=(3.0, 5.5),
+                ),
+                CaptionLayer(
+                    text="Your punchline",
+                    mood=Mood.PUNCHLINE,
+                    time=(6.0, 8.5),
+                ),
+                TitleLayer(
+                    title="install dvg",
+                    subtitle="pip install dvg",
+                    time=(duration - 1.6, duration),
+                    title_size=80,
+                    subtitle_size=44,
+                    fade_in=0.3,
+                    fade_out=0.3,
+                ),
+            ],
+            audio=[
+                AudioLayer(
+                    src=Path("music.mp3"),  # replace
+                    time=(0.0, duration),
+                    target_lufs=-22.0,
+                    duck_under_captions=True,
+                    fade_in=0.4,
+                    fade_out=0.8,
+                ),
+            ],
+            title="My demo",
+        )
+        out.write_text(template.model_dump_json(indent=2))
+    elif style == "py":
+        out.write_text(_PY_TEMPLATE.format(duration=duration))
+    else:
+        console.print(f"[red]✗[/red] unknown style: {style}")
+        raise typer.Exit(1)
+    console.print(f"[green]✓[/green] {out}")
+    console.print(
+        "[dim]edit `src` paths to your footage / music, then "
+        "[bold]dvg render " + str(out) + "[/bold][/dim]"
+    )
+
+
+_PY_TEMPLATE = """\"\"\"Starter dvg composition. Run via: uv run python this_file.py\"\"\"
+
+from pathlib import Path
+
+from dvg import (
+    AudioLayer, CaptionLayer, Composition, Mood, TitleLayer, VideoLayer,
+)
+
+DURATION = {duration}
+
+comp = Composition(
+    fps=30, width=1920, height=1080, duration=DURATION, background="#0a0a0a",
+    layers=[
+        TitleLayer(
+            title="My demo", subtitle="built with dvg",
+            time=(0.0, 2.5), fade_in=0.4, fade_out=0.4,
+        ),
+        VideoLayer(
+            src=Path("footage.mp4"),  # ← replace with your captured footage
+            time=(2.3, DURATION - 1.5), fit="cover",
+            fade_in=0.4, fade_out=0.4,
+        ),
+        CaptionLayer(text="Your first caption", mood=Mood.ANNOUNCE, time=(3.0, 5.5)),
+        CaptionLayer(text="Your punchline", mood=Mood.PUNCHLINE, time=(6.0, 8.5)),
+        TitleLayer(
+            title="install dvg", subtitle="pip install dvg",
+            time=(DURATION - 1.6, DURATION),
+            title_size=80, subtitle_size=44,
+            fade_in=0.3, fade_out=0.3,
+        ),
+    ],
+    audio=[
+        AudioLayer(
+            src=Path("music.mp3"),  # ← replace with your soundtrack
+            time=(0.0, DURATION),
+            target_lufs=-22.0, duck_under_captions=True,
+            fade_in=0.4, fade_out=0.8,
+        ),
+    ],
+)
+
+if __name__ == "__main__":
+    result = comp.render("final.mp4")
+    print(f"→ {{result.out}}  LUFS={{result.audio_lufs}}  peak={{result.audio_peak_dbfs}}")
+"""
+
+
 @app.command(name="review")
 def review_cmd(
     path: Annotated[Path, typer.Argument(help="Path to MP4")],
