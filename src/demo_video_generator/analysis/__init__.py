@@ -184,12 +184,60 @@ def analyze_events_driven(events_log: dict[str, Any]) -> dict[str, Any]:
 
 def stub_analyze(events_path: Path, out_path: Path) -> dict[str, Any]:
     """Driver entry. Reads the events log written by capture, runs the
-    deterministic events-driven analyzer, atomic-writes analysis.json.
+    deterministic events-driven analyzer, then runs the visual-analyst
+    over any uncovered gaps. Atomic-writes analysis.json.
+
+    Visual analysis runs only when a real footage MP4 (>1KB) is present.
+    Phase 1 stubs ship empty placeholders; visual is silently skipped.
     """
     if events_path.exists():
         events_log = json.loads(events_path.read_text())
     else:
         events_log = {"schema_version": 1, "events": [], "duration_seconds": 10.0}
     analysis = analyze_events_driven(events_log)
+
+    # Phase 3 visual-analyst pass: fill gaps in event coverage.
+    footage_path = events_path.parent / "footage.mp4"
+    if footage_path.is_file() and footage_path.stat().st_size > 1024:
+        from .visual import detect_visual_scenes
+
+        duration = float(analysis["duration_seconds"])
+        # Gaps = duration ranges not covered by events-driven scenes.
+        events_scenes = sorted(
+            [
+                (float(s["start"]), float(s["end"]))
+                for s in analysis["scenes"]
+                if s["source"] == "events"
+            ],
+            key=lambda x: x[0],
+        )
+        gaps: list[tuple[float, float]] = []
+        cursor = 0.0
+        for ev_start, ev_end in events_scenes:
+            if ev_start > cursor + 1.0:  # >1s gap
+                gaps.append((cursor, ev_start))
+            cursor = max(cursor, ev_end)
+        if cursor < duration - 1.0:
+            gaps.append((cursor, duration))
+
+        # If no events-driven scenes (kind=screen), the entire timeline is a gap.
+        run_on_whole = not events_scenes
+        gap_intervals = None if run_on_whole else gaps
+
+        if run_on_whole or gaps:
+            visual_scenes = detect_visual_scenes(
+                video_path=footage_path,
+                duration_seconds=duration,
+                gap_intervals=gap_intervals,
+            )
+            # Replace the placeholder visual scene if there was one (when
+            # events were empty), otherwise append the gap-fillers.
+            if run_on_whole:
+                analysis["scenes"] = [
+                    s for s in analysis["scenes"] if s["source"] != "visual"
+                ] + visual_scenes
+            else:
+                analysis["scenes"].extend(visual_scenes)
+
     write_json_atomic(out_path, analysis)
     return analysis
