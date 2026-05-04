@@ -112,6 +112,11 @@ class VideoLayer(_LayerBase):
     crop: tuple[float, float, float, float] | None = Field(
         None, description="(x, y, w, h) in 0..1 of source frame"
     )
+    # Subtle zoom over time, ala Ken Burns. 0 = static. 0.05 = zoom from 1.0
+    # to 1.05 over the layer's duration. Implemented via crop + scale.
+    ken_burns: float = Field(
+        0.0, ge=0.0, le=0.5, description="end zoom factor (0=static)"
+    )
 
 
 class ImageLayer(_LayerBase):

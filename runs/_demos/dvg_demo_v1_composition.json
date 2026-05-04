@@ -52,7 +52,8 @@
       "fit": "cover",
       "mute": true,
       "speed": 1.0,
-      "crop": null
+      "crop": null,
+      "ken_burns": 0.04
     },
     {
       "id": null,

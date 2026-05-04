@@ -81,13 +81,14 @@ def main() -> None:
                 fade_in=0.5,
                 fade_out=0.5,
             ),
-            # Captured footage 2.5..19.5s (overlaps title fadeout)
+            # Captured footage 2.5..19.5s (overlaps title fadeout); ken burns
             VideoLayer(
                 src=video_path,
                 time=(2.5, 19.5),
                 fit="cover",
                 fade_in=0.5,
                 fade_out=0.4,
+                ken_burns=0.04,
             ),
             # Narration captions over footage
             CaptionLayer(

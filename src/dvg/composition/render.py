@@ -269,6 +269,22 @@ def _prepare_video_layer(
             f"scale={comp.width}:{comp.height}:force_original_aspect_ratio=increase,"
             f"crop={comp.width}:{comp.height},"
         )
+        # Ken Burns: simple time-driven zoom (centered) — pre-upscale to a buffer
+        # then crop a fixed window. Note: ffmpeg crop's w/h must be even at all
+        # frame times. We approximate by sweeping `x,y` only (constant w,h).
+        if vl.ken_burns > 0:
+            kb = vl.ken_burns
+            dur = vl.duration
+            t0 = vl.time[0]
+            buf_w = int(comp.width * (1 + kb))
+            buf_h = int(comp.height * (1 + kb))
+            chain += (
+                f"scale={buf_w}:{buf_h}:flags=lanczos,"
+                f"crop={comp.width}:{comp.height}:"
+                f"x='({buf_w - comp.width})/2 + ({buf_w - comp.width})/2 *"
+                f"sin((t-{t0:.3f})/{dur:.3f}*PI/2)':"
+                f"y='({buf_h - comp.height})/2',"
+            )
     elif vl.fit == Fit.CONTAIN:
         chain += (
             f"scale={comp.width}:{comp.height}:force_original_aspect_ratio=decrease,"
