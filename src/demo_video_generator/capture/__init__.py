@@ -127,7 +127,11 @@ def stub_capture(input_kind: str, input_value: str, out_dir: Path) -> dict[str, 
     """Driver dispatch entry. Routes by `input_kind`:
 
     - `video` → Phase 2 file-ingest path.
-    - `url` / `screen` → synthetic placeholder (Phase 2.5 gated on ffmpeg + TCC).
+    - `url` → Phase 2.5 headed-Chromium + ffmpeg avfoundation path
+              (DVG_HEADED_CAPTURE=1 to opt in; falls back to synthetic
+              placeholder when not opted in or when TCC denies).
+    - `screen` → synthetic placeholder until ffmpeg avfoundation screen
+                 capture is wired (Phase 2.5).
 
     Synthetic mode honors DVG_DURATION env var (seconds) for tunable demo
     length without a real capture.
@@ -136,7 +140,36 @@ def stub_capture(input_kind: str, input_value: str, out_dir: Path) -> dict[str, 
 
     if input_kind == "video":
         return capture_file(Path(input_value), out_dir)
+
     duration = float(_os.environ.get("DVG_DURATION", "10"))
+
+    # Phase 2.5: real headed-Chromium capture, opt-in to keep CI / no-TCC
+    # environments on the synthetic path.
+    if input_kind == "url" and _os.environ.get("DVG_HEADED_CAPTURE") == "1":
+        from .playwright_headed import (
+            CaptureSpec,
+            TccDeniedError,
+            capture_url_headed,
+        )
+
+        try:
+            result = capture_url_headed(
+                CaptureSpec(
+                    url=input_value, out_dir=out_dir, duration_seconds=duration
+                )
+            )
+            return {
+                "footage": str(result.footage_path),
+                "events": str(result.events_path),
+                "duration_seconds": result.duration_seconds,
+                "source": "headed-chromium",
+            }
+        except TccDeniedError:
+            # Fall through to synthetic so the pipeline doesn't fail.
+            pass
+        except RuntimeError:
+            pass
+
     return capture_synthetic(out_dir, duration_seconds=duration)
 
 
