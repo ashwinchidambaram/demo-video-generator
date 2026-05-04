@@ -1,6 +1,9 @@
-# Project Management — demo-video-generator
+# Project Management — Reelsmith
 
 PM: Ashwin (executive). Subagents implement; PM reviews and signs off.
+
+> Project rename: was `demo-video-generator`, now Reelsmith (2026-05-04). CLI
+> (`dvg`) and Python package (`demo_video_generator`) retain historical names.
 
 ## Phase Status (post-autonomous-build)
 

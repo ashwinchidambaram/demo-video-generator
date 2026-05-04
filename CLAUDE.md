@@ -1,8 +1,10 @@
-# demo-video-generator — Claude Code Instructions
+# Reelsmith — Claude Code Instructions
 
 ## What this project is
 
-A tool that turns "a thing you built" into a production-quality demo video with minimal friction. The product is a fleet of specialized Claude Code subagents (each at `.claude/agents/<name>/`) backed by a thin Python CLI of deterministic primitives. Orchestration is deterministic via a Python driver (`dvg run`) that walks a per-run manifest and dispatches the next missing artifact's owning agent.
+**Reelsmith** is a tool that turns "a thing you built" into a production-quality demo video with minimal friction. The product is a fleet of specialized Claude Code subagents (each at `.claude/agents/<name>/`) backed by a thin Python CLI of deterministic primitives. Orchestration is deterministic via a Python driver (`dvg run`) that walks a per-run manifest and dispatches the next missing artifact's owning agent.
+
+> **Name note.** The project is Reelsmith; the CLI (`dvg`) and Python package (`demo_video_generator`) keep their historical names for now — renaming them touches every import, schema `$id`, codegen, and the git remote. Tracked as a future migration.
 
 **v1 scope:** automated capture → scene analysis (event-log + visual) → on-screen captions → Gemini Lyria music (or fallback) → SFX (Kenney CC0 pack) → Remotion composition → MP4 → automated QA. **No voiceover** (v2).
 

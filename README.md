@@ -1,12 +1,19 @@
-# demo-video-generator (`dvg`)
+# Reelsmith
+
+> A fleet of agents that crafts demo videos.
 
 Turn "a thing you built" into a production-quality demo video, deterministically.
 
-A fleet of 9 specialized Claude Code agents (capture, scene analysis, captions,
-music, SFX, composition, QA, knowledge curation) coordinated by a thin Python
-driver that walks a per-run JSON manifest. Render layer is Remotion v4
-(programmatic React video). Output is a 1920×1080 H.264+AAC MP4 with audio
-mixed to YouTube-aligned loudness targets (-14 LUFS / -1 dBTP).
+9 specialized Claude Code agents (capture, scene analysis, captions, music,
+SFX, composition, QA, knowledge curation) coordinated by a thin Python driver
+that walks a per-run JSON manifest. Render layer is Remotion v4 (programmatic
+React video). Output is a 1920×1080 H.264+AAC MP4 with audio mixed to
+YouTube-aligned loudness targets (-14 LUFS / -1 dBTP).
+
+> **Name note.** Reelsmith is the project. The CLI ships as `dvg` and the
+> Python package as `demo_video_generator` for now — those names predate the
+> rename and renaming them touches every import, schema `$id`, codegen
+> target, and the git remote. Tracked as a future migration.
 
 This README is the user-facing entry point. Architectural decisions live in
 `.claude/DECISIONS.md`, the implementation plan in

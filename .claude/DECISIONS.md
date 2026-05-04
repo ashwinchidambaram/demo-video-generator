@@ -154,4 +154,28 @@ Phase 1 task addition: scaffold `schemas/contracts.json` + pre-commit check.
 
 ## Future entries (post-Phase-0)
 
-Decisions made during implementation get appended below as `Dn` with date and rationale.
+### D20. Project rename: `demo-video-generator` → Reelsmith
+**Status:** 🟢 ACCEPTED 2026-05-04
+**Decision:** The project is now called **Reelsmith** (working title `demo-video-generator` was a placeholder; the new name is the brand for shipping).
+**Why:** "Demo video generator" is descriptive but not memorable; Reelsmith carries the craft framing and is shorter to type / cite / market.
+
+**Scope of this rename:**
+- ✅ User-facing prose: README, CLAUDE.md, PM.md, plan, DECISIONS.md
+- ⏸ Deferred to a future migration cycle:
+  - CLI command name (`dvg` → `reel` or `reelsmith`)
+  - Python package directory (`src/demo_video_generator/` → `src/reelsmith/`)
+  - Schema `$id` URLs (`https://demo-video-generator/schemas/...`)
+  - Codegen output paths
+  - Git remote / repo directory name
+
+The deferred items are coupled (schema URLs touch contracts.json, codegen
+output, every import in 25 source files, and the git remote). One-shotting
+them risks breaking codegen mid-flight. Migration plan when scheduled:
+
+1. Stand up `reelsmith` Python package as an import alias of `demo_video_generator` (no behavior change).
+2. Bump every `$id` URL to `reelsmith/...` in a single PR; re-run `make schemas`; verify Pydantic + Zod regenerate cleanly.
+3. Rename CLI entry point in `pyproject.toml`; keep `dvg` as a deprecated alias for one release.
+4. Rename git repo (`gh repo rename reelsmith`); update local `origin` remote.
+5. Drop the `demo_video_generator` alias.
+
+Estimated effort: 1-2 hours, clean across one branch.

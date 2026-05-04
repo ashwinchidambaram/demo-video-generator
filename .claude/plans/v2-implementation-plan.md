@@ -1,4 +1,8 @@
-# demo-video-generator — Phased Implementation Plan (v2, post-bar-raise)
+# Reelsmith — Phased Implementation Plan (v2.2, post-ultraplan)
+
+> Project renamed from `demo-video-generator` → **Reelsmith** on 2026-05-04
+> (DECISIONS.md D20). CLI (`dvg`) and Python package (`demo_video_generator`)
+> retain historical names; rename of those is a deferred migration.
 
 ## Revision History
 - **v1** — initial plan
