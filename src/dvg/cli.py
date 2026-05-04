@@ -268,6 +268,13 @@ def make_video(
     title: Annotated[str | None, typer.Option("--title")] = None,
     tagline: Annotated[str | None, typer.Option("--tagline")] = None,
     brand_color: Annotated[str | None, typer.Option("--brand-color")] = None,
+    narrations: Annotated[
+        str | None,
+        typer.Option(
+            "--narrations",
+            help="Pipe-separated list of caption strings, e.g. 'Hello|World|Try it'",
+        ),
+    ] = None,
     keep_run: Annotated[bool, typer.Option("--keep-run")] = True,
 ) -> None:
     """End-to-end: capture → analyze → direct → render → MP4."""
@@ -301,6 +308,11 @@ def make_video(
         f"{len(analysis.anchors)} anchors"
     )
 
+    narration_list = (
+        [s.strip() for s in narrations.split("|") if s.strip()]
+        if narrations
+        else None
+    )
     ctx = DirectorContext(
         video_path=cap.video_path,
         duration_s=duration,
@@ -311,6 +323,7 @@ def make_video(
         title=title,
         tagline=tagline,
         brand_color=brand_color,
+        narrations=narration_list,
     )
     comp = director_plan(ctx)
     comp.save(run_dir / "composition.json")

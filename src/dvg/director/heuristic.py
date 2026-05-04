@@ -46,6 +46,9 @@ class DirectorContext:
     brand_color: str | None = None
     soundtrack_library_dir: Path | None = None
     preferred_mood: str | None = None
+    # Optional list of caption strings to use as beat narrations, in order.
+    # If None, the heuristic uses generic narrations (no marketing copy).
+    narrations: list[str] | None = None
 
 
 # Map analysis anchor kinds → caption mood
@@ -221,18 +224,18 @@ _ANCHOR_TEMPLATES: dict[str, list[str]] = {
     "scene_start": [],
 }
 
-# Beat-level narration: drives captions on a fixed cadence regardless of scene
-# structure. Length adapts to duration. Index 0 is the "hook" right after the
-# title; last is the punchline.
+# Generic beat-level narration for non-dvg captures. Safe to apply to any site;
+# describes what the viewer is seeing (the capture itself), not marketing the
+# tool. Caller can override via DirectorContext.narrations.
 _BEAT_NARRATIONS: list[str] = [
-    "Production demo videos in one command",
-    "Capture any URL with Playwright",
-    "Auto-narrate from DOM event analysis",
-    "Compose with libass + ffmpeg",
-    "Mixed audio at −14 LUFS, YouTube-ready",
-    "No Node, no Remotion, pure Python",
-    "Faster than a webpack bundle",
-    "Schema-validated, deterministic, lean",
+    "Welcome",
+    "Take a look",
+    "Notice the layout",
+    "Smooth scrolling",
+    "Featured content",
+    "Read on",
+    "Get started",
+    "Try it",
 ]
 
 _BEAT_MOODS: list[Mood] = [
@@ -325,7 +328,10 @@ def _captions_from_beats(
     available = anchor_max_t - anchor_min_t
     if available <= cap_dur:
         return []
-    n = max(2, min(target_n, int(available / (cap_dur + gap))))
+    narrations = ctx.narrations if ctx.narrations is not None else _BEAT_NARRATIONS
+    if not narrations:
+        return []
+    n = max(2, min(target_n, len(narrations), int(available / (cap_dur + gap))))
     spacing = available / n
     out: list[CaptionLayer] = []
     for i in range(n):
@@ -333,9 +339,7 @@ def _captions_from_beats(
         cap_end = min(anchor_max_t, cap_start + min(cap_dur, spacing - gap))
         if cap_end - cap_start < 1.0:
             continue
-        text = (
-            _BEAT_NARRATIONS[i] if i < len(_BEAT_NARRATIONS) else _BEAT_NARRATIONS[-1]
-        )
+        text = narrations[i] if i < len(narrations) else narrations[-1]
         mood = _BEAT_MOODS[i] if i < len(_BEAT_MOODS) else Mood.EXPLAIN
         out.append(
             CaptionLayer(

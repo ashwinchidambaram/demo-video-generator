@@ -1,1 +1,0 @@
-color=c=0x0a0a0a:s=1920x1080:r=30:d=8.000[bg];[0:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080[v0];[bg][v0]overlay=x=0:y=0:enable='between(t,0.000,8.000)'[v_after_0];[v_after_0]subtitles=filename=/Users/ashwinchidambaram/dev/projects/demo-video-generator/.worktrees/inventing-new-solutions/runs/_demos/.dvg_external_v1_work/captions.ass[final]
