@@ -282,10 +282,7 @@ def _smoke_qa_reviewer(case: dict) -> tuple[bool, str]:
 
     inp = case.get("input", {})
     final_mp4_str = inp.get("final_mp4", "")
-    if final_mp4_str.startswith("/"):
-        final_mp4 = Path(final_mp4_str)
-    else:
-        final_mp4 = REPO_ROOT / final_mp4_str
+    final_mp4 = Path(final_mp4_str) if final_mp4_str.startswith("/") else REPO_ROOT / final_mp4_str
     if not final_mp4.is_file() and not final_mp4_str.startswith("/"):
         return True, f"skipped: {final_mp4_str} not present"
     import tempfile
@@ -401,7 +398,7 @@ def _smoke_footage_capture(case: dict) -> tuple[bool, str]:
             # Note: the temp dir is gone now, but we can still verify intent.
             pass
         if "footage_size_bytes_min" in expected:
-            min_size = expected["footage_size_bytes_min"]
+            expected["footage_size_bytes_min"]
             if result.get("source") != "synthetic":
                 # for video ingest, the size is at least min
                 pass  # checked at write time; we don't reload
@@ -521,7 +518,7 @@ def run_smoke(agent: str) -> list[CaseResult]:
         try:
             ok, notes = runner(case)
             results.append(CaseResult(agent, "smoke", case_id, passed=ok, notes=notes))
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             results.append(
                 CaseResult(agent, "smoke", case_id, passed=False, notes=f"exception: {e}")
             )

@@ -51,6 +51,9 @@ ignore = ["E501"]
 [tool.ruff.lint.per-file-ignores]
 # Typer idiom: function-call defaults are how options are declared.
 "src/demo_video_generator/cli.py" = ["B008"]
+# Eval runner is a long branchy validator; unrolled if-checks are clearer
+# than nested-and combinations.
+"evals/runner.py" = ["SIM102"]
 
 [tool.mypy]
 python_version = "3.12"
