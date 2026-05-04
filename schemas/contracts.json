@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "description": "Cross-agent contract registry per D18. Lists every consumer of every producer's schema fields. A pre-commit hook fails if a producing agent's schema changes a field without all listed consumers acknowledging via a checksum bump in consumer_acks. Mitigates the silent-mood-enum-drift class of bugs that Pydantic/Zod shape validation cannot catch.",
+  "contracts": [
+    {
+      "field": "captions.json#captions[].mood",
+      "producers": ["caption-writer"],
+      "consumers": ["composition-director", "qa-reviewer"],
+      "consumer_acks": {
+        "composition-director": "v1-mood-enum:announce|explain|punchline|aside|callout|tagline",
+        "qa-reviewer": "v1-mood-enum:announce|explain|punchline|aside|callout|tagline"
+      }
+    },
+    {
+      "field": "captions.json#captions[].priority",
+      "producers": ["caption-writer"],
+      "consumers": ["composition-director"],
+      "consumer_acks": {
+        "composition-director": "v1-priority-range:1..5"
+      }
+    },
+    {
+      "field": "captions.json#captions[].anchor_event_id",
+      "producers": ["caption-writer"],
+      "consumers": ["composition-director"],
+      "consumer_acks": {
+        "composition-director": "v1-anchor-id:string-must-resolve-in-analysis.events"
+      }
+    },
+    {
+      "field": "analysis.json#events[].kind",
+      "producers": ["event-log-analyst", "footage-capture"],
+      "consumers": ["sfx-curator"],
+      "consumer_acks": {
+        "sfx-curator": "v1-kind-taxonomy:click|keydown|submit|framenavigated|navigation|pushstate|modal_open|modal_close|console_error|network_failure"
+      }
+    },
+    {
+      "field": "analysis.json#events[].id",
+      "producers": ["event-log-analyst"],
+      "consumers": ["caption-writer", "sfx-curator", "composition-director"],
+      "consumer_acks": {
+        "caption-writer": "v1-anchor-invariant:byte-identical-roundtrip",
+        "sfx-curator": "v1-anchor-invariant:byte-identical-roundtrip",
+        "composition-director": "v1-anchor-invariant:byte-identical-roundtrip"
+      }
+    },
+    {
+      "field": "composition.json#style.preset",
+      "producers": ["composition-director"],
+      "consumers": ["__renderer__"],
+      "consumer_acks": {
+        "__renderer__": "v1-preset-enum:announce-clean|explain-soft|punchline-bold|retro-warm|neutral"
+      }
+    },
+    {
+      "field": "composition.json#audio.mix",
+      "producers": ["composition-director"],
+      "consumers": ["__renderer__", "qa-reviewer"],
+      "consumer_acks": {
+        "__renderer__": "v1-mix-targets:integrated_lufs|true_peak_dbtp|duck_to_lufs",
+        "qa-reviewer": "v1-mix-targets:integrated_lufs|true_peak_dbtp|duck_to_lufs"
+      }
+    },
+    {
+      "field": "qa.json#issues[].code",
+      "producers": ["qa-reviewer"],
+      "consumers": ["__driver__"],
+      "consumer_acks": {
+        "__driver__": "v1-allowlist:MUSIC_BPM_OFF_TARGET|MIX_TRUEPEAK_EXCEEDED|MIX_LUFS_OFF_TARGET|CAPTION_OUT_OF_FRAME|DEAD_AIR|FINAL_MP4_MISSING"
+      }
+    }
+  ]
+}

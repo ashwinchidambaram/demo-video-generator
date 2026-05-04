@@ -35,6 +35,8 @@ jobs:
         run: uv run ruff check src tests
       - name: Typecheck
         run: uv run mypy src
+      - name: Check contracts (D18)
+        run: uv run python -m demo_video_generator.tools.check_contracts
       - name: Test
         run: uv run pytest -q
 

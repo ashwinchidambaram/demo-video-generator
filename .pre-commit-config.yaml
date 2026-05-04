@@ -25,3 +25,10 @@ repos:
         language: system
         pass_filenames: false
         files: ^schemas/.*\.schema\.json$
+
+      - id: check-contracts
+        name: check-contracts (D18 cross-agent registry)
+        entry: make check-contracts
+        language: system
+        pass_filenames: false
+        files: ^(schemas/contracts\.json|src/demo_video_generator/run\.py)$

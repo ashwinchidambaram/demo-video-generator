@@ -7,16 +7,17 @@ CHECKSUM_FILE := schemas/.checksums
 
 help:
 	@echo "Targets:"
-	@echo "  install        - uv sync + remotion deps"
-	@echo "  schemas        - codegen Pydantic + Zod from schemas/*.schema.json"
-	@echo "  schemas-check  - verify codegen is up to date with sources"
-	@echo "  agents         - compile .claude/agents/<x>/agent.md from section-loader markers"
-	@echo "  test           - pytest"
-	@echo "  lint           - ruff check"
-	@echo "  format         - ruff format + prettier write"
-	@echo "  typecheck      - mypy --strict src/"
-	@echo "  doctor         - run dvg doctor"
-	@echo "  clean          - remove generated files"
+	@echo "  install          - uv sync + remotion deps"
+	@echo "  schemas          - codegen Pydantic + Zod from schemas/*.schema.json"
+	@echo "  schemas-check    - verify codegen is up to date with sources"
+	@echo "  check-contracts  - validate schemas/contracts.json (D18 cross-agent registry)"
+	@echo "  agents           - compile .claude/agents/<x>/agent.md from section-loader markers"
+	@echo "  test             - pytest"
+	@echo "  lint             - ruff check"
+	@echo "  format           - ruff format + prettier write"
+	@echo "  typecheck        - mypy --strict src/"
+	@echo "  doctor           - run dvg doctor"
+	@echo "  clean            - remove generated files"
 
 install:
 	uv sync --all-extras
@@ -51,6 +52,9 @@ schemas-check:
 
 agents:
 	uv run python -m demo_video_generator.tools.compile_agents
+
+check-contracts:
+	uv run python -m demo_video_generator.tools.check_contracts
 
 test:
 	uv run pytest

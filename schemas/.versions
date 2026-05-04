@@ -1,0 +1,8 @@
+{
+  "_comment": "D14 schema-bump policy. schema_version is the major; schema_minor (additive non-breaking) increments freely. Breaking changes (removed field, type narrowing, removed enum value, required-field addition) require schema_version bump and a registered migration in src/demo_video_generator/migrations/.",
+  "analysis.schema.json": { "schema_version": 1, "schema_minor": 0 },
+  "captions.schema.json":  { "schema_version": 1, "schema_minor": 1 },
+  "composition.schema.json": { "schema_version": 1, "schema_minor": 2 },
+  "error.schema.json":     { "schema_version": 1, "schema_minor": 0 },
+  "manifest.schema.json":  { "schema_version": 1, "schema_minor": 1 }
+}
