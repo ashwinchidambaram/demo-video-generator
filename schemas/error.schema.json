@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://demo-video-generator/schemas/error.schema.json",
+  "title": "Error",
+  "description": "Standard error envelope emitted by CLI primitives (stderr) and agents (run-dir error.json) per D6.",
+  "type": "object",
+  "required": ["error", "code", "retryable", "schema_version"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "error": {"type": "string", "description": "Human-readable error message."},
+    "code": {"type": "string", "description": "Stable machine-readable error code (e.g. CAPTURE_TCC_DENIED)."},
+    "retryable": {"type": "boolean", "description": "If true, the driver may retry once before escalating."},
+    "suggestion": {"type": "string", "description": "Remediation hint shown to the user."},
+    "stage": {"type": "string", "description": "Pipeline stage that produced the error."},
+    "context": {"type": "object", "additionalProperties": true, "description": "Free-form structured context."}
+  }
+}

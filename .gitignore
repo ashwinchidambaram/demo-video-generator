@@ -31,5 +31,16 @@ Thumbs.db
 .idea/
 
 # Project
-runs/
+runs/*
+!runs/refresh/
+runs/refresh/*
+!runs/refresh/manifest.json
 .claude/worklog.md
+
+# Codegen output (regenerated via `make schemas`)
+src/demo_video_generator/schemas/*.py
+!src/demo_video_generator/schemas/__init__.py
+remotion/src/schemas/*.ts
+
+# Remotion render output
+remotion/out/

@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://demo-video-generator/schemas/manifest.schema.json",
+  "title": "RunManifest",
+  "description": "Per-run state file driving the deterministic dvg run pipeline. Encodes per-stage status, depends_on DAG (cascading invalidation), durations, and costs.",
+  "type": "object",
+  "required": ["schema_version", "run_id", "input", "stages"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "run_id": {"type": "string", "description": "Timestamp-based run identifier (e.g. 2026-05-03T22-42-00)."},
+    "input": {
+      "type": "object",
+      "description": "What the user fed in.",
+      "required": ["kind", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"type": "string", "enum": ["url", "video", "screen"]},
+        "value": {"type": "string"}
+      }
+    },
+    "config": {
+      "type": "object",
+      "description": "Resolved run configuration (capture mode, target duration, etc.).",
+      "additionalProperties": true
+    },
+    "stages": {
+      "type": "array",
+      "description": "Ordered pipeline stages. Driver walks this in order and dispatches the owning agent for any stage whose artifact is missing.",
+      "items": {"$ref": "#/$defs/Stage"}
+    }
+  },
+  "$defs": {
+    "Stage": {
+      "type": "object",
+      "required": ["name", "artifact", "owner", "status", "depends_on"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string", "description": "Stable stage identifier (e.g. capture, analyze, music, compose)."},
+        "artifact": {"type": "string", "description": "Path (relative to run dir) of the artifact this stage produces."},
+        "owner": {"type": "string", "description": "Agent name responsible for this stage."},
+        "depends_on": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Names of upstream stages whose artifacts this stage consumes. Drives --from cascading invalidation."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "running", "complete", "failed", "skipped"]
+        },
+        "started_at": {"type": ["string", "null"], "format": "date-time"},
+        "finished_at": {"type": ["string", "null"], "format": "date-time"},
+        "duration_seconds": {"type": ["number", "null"]},
+        "cost_usd": {"type": ["number", "null"], "description": "Estimated cost of this stage (LLM tokens + API calls)."},
+        "tokens": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "input": {"type": "integer"},
+            "output": {"type": "integer"}
+          }
+        },
+        "attempts": {"type": "integer", "minimum": 0, "description": "Number of times the driver has dispatched this stage."},
+        "error": {"$ref": "error.schema.json"}
+      }
+    }
+  }
+}

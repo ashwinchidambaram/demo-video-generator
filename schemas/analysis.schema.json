@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://demo-video-generator/schemas/analysis.schema.json",
+  "title": "Analysis",
+  "description": "Scene analysis combining DOM-event-driven sections (event-log-analyst) and visual gap-fill sections (visual-analyst). Both write into the same artifact.",
+  "type": "object",
+  "required": ["schema_version", "duration_seconds", "scenes"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "duration_seconds": {"type": "number", "minimum": 0},
+    "fps": {"type": "number", "minimum": 1},
+    "resolution": {
+      "type": "object",
+      "required": ["width", "height"],
+      "additionalProperties": false,
+      "properties": {
+        "width": {"type": "integer", "minimum": 1},
+        "height": {"type": "integer", "minimum": 1}
+      }
+    },
+    "scenes": {
+      "type": "array",
+      "description": "Ordered, non-overlapping scene segments.",
+      "items": {"$ref": "#/$defs/Scene"}
+    },
+    "events": {
+      "type": "array",
+      "description": "Discrete user-interaction or DOM events. Used by sfx-curator and as caption anchors.",
+      "items": {"$ref": "#/$defs/Event"}
+    }
+  },
+  "$defs": {
+    "Scene": {
+      "type": "object",
+      "required": ["id", "start", "end", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string"},
+        "start": {"type": "number", "minimum": 0},
+        "end": {"type": "number", "minimum": 0},
+        "source": {"type": "string", "enum": ["events", "visual"], "description": "Which analyst produced this segment."},
+        "summary": {"type": "string"},
+        "energy": {"type": "string", "enum": ["low", "medium", "high"]},
+        "ui_elements": {"type": "array", "items": {"type": "string"}},
+        "keyframe_paths": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "Event": {
+      "type": "object",
+      "required": ["id", "t", "kind"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "description": "Stable event id used as caption anchor_event_id."},
+        "t": {"type": "number", "minimum": 0, "description": "Timestamp (seconds) within the source video."},
+        "kind": {"type": "string", "description": "Event type: click, keypress, navigation, modal_open, etc."},
+        "selector": {"type": ["string", "null"]},
+        "label": {"type": ["string", "null"], "description": "Human-readable description, e.g. 'click Submit'."},
+        "payload": {"type": "object", "additionalProperties": true}
+      }
+    }
+  }
+}

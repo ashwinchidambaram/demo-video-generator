@@ -3,6 +3,7 @@
 ## Revision History
 - **v1** — initial plan
 - **v2** — folded in 4 Opus reviewer findings + audio-QA toolkit insight. Major changes: dropped `director` agent in favor of deterministic `dvg run` driver; added Phase -1 Pre-Flight Decisions; verified-fact updates to Lyria / Playwright / Remotion; split `scene-analyst` into event-log + visual; demoted `render-engineer` to CLI-only; added audio-QA shell toolkit as the audio-judgment substrate; promoted CI, schema codegen, perceptual diff, judge diversity, `_shared/` knowledge, and held-out eval cases into Phase 0.
+- **v2.1** — self-review pass. Trimmed Phase 0 by deferring eval-runner scaffolding / GitHub Actions / perceptual-diff plumbing to Phase 1; promoted cascading-invalidation (`depends_on`) and freshness-manifest scaffolding into Phase 0 so the manifest contract is locked once; defined the "first revision is baseline" eval rule; added cost-cap revisit gate before Phase 4; moved headed-Chromium chrome-hiding spike to Phase 2 entry; flipped LUFS target to -14 integrated / -1 dBTP for YouTube alignment; marked Phase 6 golden MP4s as placeholder-caption with explicit Phase 7 rebaseline; added artifact atomic-write requirement; defined Phase 11 "successful demo" criteria; added `dvg doctor` schema-hash freshness check and TCC-URL remediation.
 
 ---
 
@@ -22,9 +23,10 @@ These are the convergent blockers all four reviewers flagged. They are decisions
 
 ### D1. Lyria access verification
 **Decide:** Does `lyria-3-clip-preview` and/or `lyria-3-pro-preview` work today on Ashwin's `GEMINI_API_KEY`? What's the fallback?
-**Action:** Run a smoke call against both Lyria preview models. If accessible, commit. If not, decide fallback now: Suno API, Stable Audio, MusicGen (open-weights, local), or Riffusion. **Do not start Phase 0 with this unresolved** — it determines `music-prompt-engineer`'s entire knowledge base target.
+**Action:** Run a smoke call against both Lyria preview models — this is the only empirical Phase -1 item and gates Phase 4 entry. Target: resolve in one sitting (≤1 hour). If accessible, commit. If not, decide fallback in ranked order: (1) Suno API, (2) Stable Audio Open API, (3) MusicGen-medium local (Apple Silicon MPS only — Intel mac too slow for v1 latency budget), (4) Riffusion. **Do not start Phase 0 with this unresolved** — it determines `music-prompt-engineer`'s entire knowledge base target.
 **Verified context (May 2026):** Both Lyria models are in **Preview**, not GA. `lyria-3-clip-preview` returns 30s MP3 only; `lyria-3-pro-preview` returns ~2-3 min WAV. Reachable via `google-genai` SDK without GCP project setup.
 **Implication if Lyria:** stitch/crossfade for >30s outputs is required in Phase 4 (not deferred).
+**Implication if local MusicGen fallback:** Apple Silicon required; document Intel-mac unsupported in `dvg doctor`.
 
 ### D2. Schema source-of-truth
 **Decide:** JSON Schema → codegen Pydantic + Zod, OR hand-maintain both.
@@ -303,7 +305,7 @@ The QA gap in v1 was: how does an agent (or `dvg review`) judge audio without ea
 - **`music-prompt-engineer/evals/rubric.md`** — converts subjective "matches vibe" into measurable assertions: BPM within ±5 of brief, integrated LUFS in [-18, -12], energy CSV shows declared shape (build/plateau/dip), spectrogram has continuous mid-band content (no dead air at boundaries).
 - **`qa-reviewer/knowledge/core.md`** (loads `_shared/audio-qa-toolkit.md`) — battery of checks before signing off final.mp4.
 - **`src/.../review/qa.py`** — `dvg review` runs the battery automatically and writes `audio_qa.json` to the run dir.
-- **`composition-director/knowledge/patterns.md`** — concrete LUFS targets (music ducks to ≤ -22 LUFS under SFX peaks; final mix integrated -16 LUFS).
+- **`composition-director/knowledge/patterns.md`** — concrete LUFS targets (music ducks to ≤ -22 LUFS under SFX peaks; final mix **integrated -14 LUFS, true peak ≤ -1 dBTP** — YouTube-aligned).
 
 The one thing this still can't do: render a value judgment on taste ("does this song feel cool"). That stays a manual PM check at phase exit.
 
@@ -326,6 +328,8 @@ Three case classes per agent:
 - **Holdout (2)** — never shown during prompt tuning; revealed only at phase exit
 
 **Judge diversity:** the LLM judge runs on a *different model family* than the agent. Agent on Sonnet → judge on Opus + a Haiku rubric-only check. This mitigates self-preference bias (5–25% in literature).
+
+**Baseline rule:** the *first* revision of an agent's prompt that passes contract tests is recorded as `evals/cases/<agent>/baselines/v1.json` (full headline + holdout scores). Subsequent revisions compare against the most recent green baseline. Baselines roll forward only when a revision is promoted.
 
 **Promotion rule for new prompt revisions:**
 - Headline rubric ≥ baseline AND
@@ -419,30 +423,35 @@ Each phase: entry criteria / tasks (with model tier) / exit criteria / validatio
 2. **Author `schemas/*.schema.json`** (single source of truth) — Sonnet
 3. **`make schemas` codegens Pydantic + Zod** — Sonnet
 4. **`schema_version` field on every artifact** — Sonnet
-5. Author error contract module per D6 — Sonnet
-6. Implement `dvg run` driver skeleton (walks manifest, no agents wired yet) — Sonnet
-7. Author `_template/` agent skeleton with section-loader markers per D5 — Sonnet
-8. Author `_shared/` initial files (audio-qa-toolkit.md, run-artifacts.md, error-contract.md, remotion.md stub) — Sonnet
-9. Set up pytest, ruff, mypy --strict, prettier, **pre-commit hooks (gitleaks)** — Haiku
-10. Set up `evals/runner.py` skeleton with judge-diversity + holdout support — Sonnet
-11. **GitHub Actions: ci.yml + evals.yml** — Sonnet
+5. **Manifest schema includes per-stage `depends_on: [stage_name]`** so `--from <step>` cascading invalidation is encoded in data, not driver heuristics — Sonnet
+6. Author error contract module per D6 — Sonnet
+7. Implement `dvg run` driver skeleton (walks manifest, no agents wired yet). Driver writes artifacts via tmpfile + atomic rename so a kill mid-stage cannot poison re-runs — Sonnet
+8. Author `_template/` agent skeleton with section-loader markers per D5 — Sonnet
+9. Author `_shared/` initial files. **Schemas in `_shared/run-artifacts.md` are LOCKED at end of Phase 0** — only prose updates allowed in later phases — Sonnet
+   - `audio-qa-toolkit.md`, `run-artifacts.md` (schema-locked), `error-contract.md`, `remotion.md` stub
+10. **Freshness-manifest scaffolding:** convention for `knowledge/changelog.md` per agent + `runs/refresh/manifest.json` shape. Curator agent itself ships in Phase 10, but the *files and schema* exist now so changelogs accumulate from day one — Sonnet
+11. Set up pytest, ruff, mypy --strict, prettier, **pre-commit hooks (gitleaks)** — Haiku
 12. **Local fixture HTTP server** (`tests/fixtures/site/`) — Haiku
 13. Bootstrap `remotion/` Node project (Remotion v4) — Sonnet
 14. Author `.claude/PM.md` and seed `DECISIONS.md` from D1-D7 — Haiku
-15. `dvg doctor` v1: checks all required deps + codegen freshness — Sonnet
-16. Initial git commit, push, CI green — direct
+15. `dvg doctor` v1: checks all required deps + **codegen freshness via SHA256 hash of `schemas/*.schema.json` recorded in `schemas/.checksums` — fails loudly if codegen is stale**. Includes `--strict-freshness` flag stub (no-op until Phase 10 wires curator) — Sonnet
+16. **macOS TCC remediation:** `dvg doctor` *prints* `open "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"` rather than auto-opening it — Haiku
+17. Initial git commit, push — direct
+
+**Deferred to Phase 1** (was in Phase 0 v2): `evals/runner.py` skeleton, GitHub Actions (`ci.yml` + `evals.yml`), perceptual-diff plumbing. Rationale: these add surface area before any agent exists and slow time-to-walking-skeleton. CI lives locally on `make` targets in Phase 0 and graduates to GitHub Actions in Phase 1 once the walking skeleton has something meaningful to run.
 
 **Exit criteria:**
 - [ ] `uv sync` succeeds
 - [ ] `make schemas && pytest` green; `mypy --strict src/` clean; `ruff` clean; `prettier --check remotion/` clean
-- [ ] CI green on initial commit
 - [ ] Pre-commit hooks fire on test commit
 - [ ] `npx remotion preview` boots
-- [ ] `dvg doctor` green
+- [ ] `dvg doctor` green; codegen-hash check fails when a schema is touched without re-running `make schemas`
 - [ ] `dvg run` driver runs against an empty fixture and exits cleanly with a "no agents wired" message
+- [ ] Driver atomic-write check: kill driver mid-stage; restart; partial artifacts must not exist
+- [ ] Manifest carries `depends_on` per stage; `--from <step>` invalidates downstream stages correctly per declared deps
 - [ ] `_template/` produces a buildable compiled agent file via `make agents`
-- [ ] All `_shared/` files exist and are referenced by `_template/`
-- [ ] `evals/runner.py` runs against zero cases with exit 0
+- [ ] All `_shared/` files exist and are referenced by `_template/`; `_shared/run-artifacts.md` schema section marked LOCKED
+- [ ] `runs/refresh/manifest.json` schema and per-agent `knowledge/changelog.md` convention documented
 - [ ] Local fixture HTTP server boots and serves a static page
 
 **Validation gate:** code-reviewer subagent reviews scaffold + schemas + driver skeleton. PM signs off in PM.md.
@@ -464,15 +473,19 @@ Each phase: entry criteria / tasks (with model tier) / exit criteria / validatio
 6. Minimal `DemoVideo.tsx` consuming valid composition.json — Sonnet
 7. `dvg render` via `renderMedia` programmatic API — Sonnet
 8. Stub agent definitions for all 9 agents (each runs its stub CLI) — Sonnet
-9. **`dvg run` wired to dispatch stub agents in order** — Sonnet
+9. **`dvg run` wired to dispatch stub agents in order, honoring `depends_on` for `--from`** — Sonnet
 10. `make-video.md` slash command wraps `dvg run` — Sonnet
-11. E2E test against local fixture HTTP server — Sonnet
+11. **`evals/runner.py` skeleton** with judge-diversity + holdout support (deferred from Phase 0) — Sonnet
+12. **GitHub Actions: `ci.yml` (unit + contract + lint on push) + `evals.yml` (nightly + on `eval` label)** (deferred from Phase 0) — Sonnet
+13. **Perceptual-diff harness** in `tests/perceptual/` — frame-hash + audio-fingerprint with configurable similarity threshold (dHash ≥ 0.95 default) — Sonnet
+14. E2E test against local fixture HTTP server — Sonnet
 
 **Exit criteria:**
-- [ ] All 9 agents have agent.md (compiled) + prompts/system.md + empty knowledge/ + empty evals/cases/ + refresh.md stub
+- [ ] All 9 agents have agent.md (compiled) + prompts/system.md + empty knowledge/ + empty evals/cases/ + refresh.md stub + `knowledge/changelog.md` (empty, per Phase 0 convention)
 - [ ] `dvg doctor` green
+- [ ] CI green on initial commit; both `ci.yml` and `evals.yml` validated
 - [ ] `dvg run http://localhost:<port>/fixture.html` produces a valid (silent, blank-ish) MP4
-- [ ] Driver correctly handles `--from <step>` (delete artifact, rerun, regenerates only that artifact onward)
+- [ ] Driver correctly handles `--from <step>` and cascading invalidation honors `depends_on` (regenerates only the target stage and its declared downstream)
 - [ ] All artifacts validate at every stage (asserted in e2e test)
 - [ ] Run manifest captures per-stage status, duration, and (zeroed) cost
 - [ ] Contract tests for all 9 agents: green on stub outputs
@@ -485,7 +498,7 @@ Each phase: entry criteria / tasks (with model tier) / exit criteria / validatio
 
 ### Phase 2 — Capture Domain
 
-**Entry:** Phase 1 signed off.
+**Entry:** Phase 1 signed off. **Plus:** 1-hour spike resolving Open Q B.3 — how to hide Chrome chrome (omnibox/tabs) for clean demos. Decide between `--app=URL`, `--kiosk`, or CDP-injected CSS. Lock the choice in `DECISIONS.md` as D8 before any capture code lands.
 
 **Tasks:**
 1. **Research spike (knowledge-curator):** Playwright headed-Chromium + ffmpeg avfoundation patterns; macOS TCC permission UX; cursor visibility — Opus run with WebFetch/WebSearch
@@ -539,14 +552,14 @@ Each phase: entry criteria / tasks (with model tier) / exit criteria / validatio
 
 ### Phase 4 — Music Domain
 
-**Entry:** Phase 3 signed off + D1 confirmed (Lyria or fallback chosen).
+**Entry:** Phase 3 signed off + D1 confirmed (Lyria or fallback chosen) + **eval-cost actuals from Phases 2–3 reviewed against the $5/refresh and $10/phase-eval caps; revise caps in DECISIONS.md if Opus-judge spend is trending over budget.**
 
 **Tasks:**
 1. Implement `src/.../music/<lyria_or_fallback>.py` client with auth, retries, vcr cassettes — Sonnet
 2. Implement `src/.../music/stitch.py` (crossfade for >30s if Lyria preview) — Sonnet
 3. Author music-prompt-engineer knowledge: 10+ prompt patterns with examples — Opus
 4. Author prompts/system.md v1 — Opus
-5. **Author audio-QA-grounded eval rubric** (BPM ±5, LUFS [-18,-12], energy shape match, spectrogram continuity) — Opus
+5. **Author audio-QA-grounded eval rubric** (BPM ±5, integrated LUFS in [-16, -12] for music stems pre-mix, energy shape match, spectrogram continuity) — Opus
 6. Build evals (5+10+2): upbeat tech, calm explainer, dramatic, retro, custom — Opus
 7. Wire agent
 
@@ -593,7 +606,7 @@ Each phase: entry criteria / tasks (with model tier) / exit criteria / validatio
 1. **Research spike:** Remotion v4 patterns; `OffthreadVideo` vs `Video`; dynamic media via `props`; `renderMedia` API — knowledge-curator (Opus)
 2. Build `remotion/src/DemoVideo.tsx`: layered footage + caption overlays + audio mix + SFX placements — Sonnet
 3. Caption layout components: typography, animation, mood-based variants (placeholder copy ok) — Sonnet
-4. Audio mix: music ducking to ≤-22 LUFS under SFX peaks; integrated -16 LUFS — Sonnet
+4. Audio mix: music ducking to ≤-22 LUFS under SFX peaks; **integrated -14 LUFS** (YouTube alignment); **true peak ≤ -1 dBTP** — Sonnet
 5. **Resolve caption timing in composition-director per D4** (anchor_event_id + intent_duration → start/end) — Sonnet
 6. `dvg compose` validator + `dvg render` via `renderMedia` — Sonnet
 7. Author composition-director knowledge (Remotion API, layering, timing math, audio mix) — Opus
@@ -605,7 +618,8 @@ Each phase: entry criteria / tasks (with model tier) / exit criteria / validatio
 - [ ] Unit + contract + quality + holdout green
 - [ ] `dvg render` from fixture composition.json produces MP4 in ≤2× realtime
 - [ ] **Caption layout** (placeholder copy) renders without overflow on all 5 fixtures *(readability deferred to Phase 7)*
-- [ ] Audio mix passes ebur128: integrated -16 LUFS ±2; no true-peak clipping
+- [ ] Audio mix passes ebur128: integrated -14 LUFS ±1; true peak ≤ -1 dBTP
+- [ ] Golden MP4s emitted from this phase are tagged `placeholder-caption` in `tests/fixtures/golden/` and slated for explicit rebaseline in Phase 7; perceptual-diff CI ignores caption text region until then
 - [ ] Regression + perceptual green
 - [ ] Code-reviewer signs off
 
@@ -627,7 +641,8 @@ Each phase: entry criteria / tasks (with model tier) / exit criteria / validatio
 **Exit criteria:**
 - [ ] Contract + quality + holdout green
 - [ ] Captions ≤7 words/line, ≥1.5s on screen (after composition-director resolves timing), no overlap with key UI elements
-- [ ] Regression + perceptual green (golden MP4s update if visual diff is intentional)
+- [ ] **Phase 6 `placeholder-caption` golden MP4s rebaselined with real captions; perceptual-diff caption-region masking removed**
+- [ ] Regression + perceptual green
 - [ ] Code-reviewer signs off
 
 **Validation gate:** PM watches 3 videos with real captions; sign-off.
@@ -661,9 +676,9 @@ Each phase: entry criteria / tasks (with model tier) / exit criteria / validatio
 
 **Tasks:**
 1. Polish `dvg run`: progress reporting, structured logs, cost summary in manifest — Sonnet
-2. `--from <step>` rigorous testing across all 8 stages — Sonnet
+2. `--from <step>` rigorous testing across all 8 stages including cascading invalidation per `depends_on` — Sonnet
 3. Refine `make-video.md` UX (progress indicators, friendly errors) — Sonnet
-4. Author `_shared/run-artifacts.md` final version (was placeholder in Phase 0)
+4. **Prose-only update to `_shared/run-artifacts.md`** (schemas were locked at end of Phase 0; only narrative/example sections change here)
 5. Run dir cleanup policy / `dvg run --keep-runs N`
 
 **Exit criteria:**
@@ -683,7 +698,7 @@ Each phase: entry criteria / tasks (with model tier) / exit criteria / validatio
 **Tasks:**
 1. Implement `knowledge-curator` agent — Opus
 2. `/refresh-agents` slash command produces refresh report — Sonnet
-3. Implement freshness manifest + `dvg doctor --strict-freshness` — Sonnet
+3. **Wire `dvg doctor --strict-freshness`** against the freshness-manifest schema scaffolded in Phase 0 (so phase-exit gates can fail on stale agent knowledge) — Sonnet
 4. Citation enforcement (auto-reject updates without URL+excerpt) — Sonnet
 5. Run first full refresh; review and apply approved updates — manual
 6. Document cadence in CLAUDE.md
@@ -711,10 +726,16 @@ Each phase: entry criteria / tasks (with model tier) / exit criteria / validatio
 5. Decide PyPI publish or local-only
 6. Tag v1.0
 
+**Definition of "successful real-world demo"** (all must hold per video):
+- `dvg run` produces a `final.mp4` without manual intervention
+- `qa-reviewer` returns `qa.json` with no `severity: high` issues
+- Audio QA: integrated -14 LUFS ±1, true peak ≤ -1 dBTP, no dead air >2s
+- PM watches end-to-end and approves (subjective taste check, the one thing the toolkit can't automate)
+
 **Exit criteria:**
 - [ ] All agent evals at ≥ thresholds
-- [ ] 5 successful real-world demos
-- [ ] README quickstart works for a fresh user
+- [ ] 5 successful real-world demos *per the definition above* (not just "PM watched and nodded")
+- [ ] README quickstart works for a fresh user (verified by a clean-machine dry run)
 - [ ] CLAUDE.md current
 
 **Validation gate:** Final PM review; tag.
@@ -770,26 +791,26 @@ Most v1 open questions are now resolved by Phase -1 decisions. Remaining items:
 ### A. Agent roster & prompts
 1. Should `event-log-analyst` and `visual-analyst` share a `_shared/scene-analysis.md` knowledge file, or is their work different enough to warrant separate KBs?
 2. Caption "moods" — what's the v1 set? (announce / explain / punchline / aside / callout / tagline?)
-3. Composition-director audio mix targets — is integrated -16 LUFS the right ceiling for demo videos? (YouTube target is -14, podcasts -16.)
+3. ~~Composition-director audio mix targets~~ **RESOLVED in v2.1:** integrated -14 LUFS, true peak ≤ -1 dBTP (YouTube-aligned). Revisit only if dominant distribution channel changes.
 4. Should `qa-reviewer` ever auto-loop back ("regenerate music with brighter prompt") or always escalate to user? Current plan: escalate.
 
 ### B. Tooling reality
 1. If Lyria preview is gated/unstable, what's the ranked fallback list? (Suno API, Stable Audio Open, MusicGen-medium local, Riffusion?)
-2. macOS TCC permission UX — first-run flow needs design. Does `dvg doctor` open System Settings, or just print remediation text?
-3. Headed Chromium recording: how do we hide the Chrome chrome (omnibox, tabs) for a clean demo? `--app=URL` mode? `--kiosk`? Custom CDP setup?
+2. ~~macOS TCC permission UX~~ **RESOLVED in v2.1:** `dvg doctor` *prints* the `x-apple.systempreferences:` URL; user pastes/clicks. No auto-open.
+3. ~~Headed Chromium chrome-hiding~~ **DEFERRED to Phase 2 entry spike (D8).** 1-hour decision between `--app=URL`, `--kiosk`, or CDP CSS injection.
 4. Remotion v4: do we need `<OffthreadVideo>` for the footage layer, and does that require `@remotion/renderer` (not web-renderer)?
 5. ffmpeg avfoundation device IDs are stable across macOS versions? `dvg doctor` should enumerate.
 
 ### C. Eval framework
 1. Hold-out cases (2 per agent): how often do we rotate the holdout set? Stale holdouts get stale.
 2. Judge model rotation: Opus 4.7 vs Sonnet 4.6 vs Haiku — should the rubric-only check always be Haiku, or rotate?
-3. Cost cap: $5/refresh and $10/phase-eval — defensible? Track actuals in Phase 2-4 and revisit.
-4. Perceptual diff threshold: how strict? Frame-hash exact-match is too strict for any nondeterministic stage; need a similarity threshold (e.g., dHash ≥ 0.95).
+3. Cost cap: $5/refresh and $10/phase-eval — defensible? **Now a hard checkpoint at Phase 4 entry** (track actuals from Phases 2–3 and revise caps in DECISIONS.md before Music Domain begins).
+4. ~~Perceptual diff threshold~~ **RESOLVED in v2.1:** dHash ≥ 0.95 default, configurable per fixture. Caption regions masked on `placeholder-caption`-tagged goldens until Phase 7 rebaseline.
 
 ### D. Architecture & schemas
 1. `composition.json` is the most complex artifact. Should we version it more aggressively (semver per-phase) given expected churn?
 2. Run-directory cleanup: keep last N runs? Compress old runs? Sync to cloud for sharing?
-3. `--from <step>` should it be smart about cascading invalidation? (e.g., changing music doesn't invalidate captions, but changing analysis does invalidate captions and downstream.)
+3. ~~`--from <step>` cascading invalidation~~ **RESOLVED in v2.1:** encoded as `depends_on: [stage_name]` per stage in the manifest schema (Phase 0). Driver computes the invalidation set from the DAG.
 4. Should `dvg run` support `--dry-run` (validate config + manifest without dispatching agents)?
 
 ### E. Knowledge & self-improvement
