@@ -1,0 +1,24 @@
+{
+  "kind": "smoke",
+  "description": "Brief with 5 fields \u2192 5+ moods, never one-mood-dominant beyond 80%",
+  "input": {
+    "brief": {
+      "title": "X",
+      "explainers": [
+        "one",
+        "two"
+      ],
+      "callouts": [
+        {
+          "text": "c",
+          "anchor_event_idx": 1
+        }
+      ],
+      "punchline": "Done.",
+      "tagline": "Y"
+    }
+  },
+  "expected": {
+    "distinct_moods_min": 4
+  }
+}

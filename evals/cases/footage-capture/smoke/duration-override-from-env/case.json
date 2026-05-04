@@ -1,0 +1,14 @@
+{
+  "kind": "smoke",
+  "description": "DVG_DURATION env var changes synthetic placeholder duration",
+  "input": {
+    "input_kind": "url",
+    "input_value": "http://localhost:0/",
+    "env": {
+      "DVG_DURATION": "25"
+    }
+  },
+  "expected": {
+    "duration_seconds": 25.0
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "kind": "smoke",
+  "description": "--agent flag limits scope to one",
+  "input": {
+    "agent": "qa-reviewer"
+  },
+  "expected": {
+    "agents_inspected": 1
+  }
+}

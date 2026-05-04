@@ -1,0 +1,19 @@
+{
+  "kind": "smoke",
+  "description": "Callout anchored to specified event index",
+  "input": {
+    "brief": {
+      "title": "X",
+      "callouts": [
+        {
+          "text": "<- look here",
+          "anchor_event_idx": 2
+        }
+      ],
+      "tagline": "Y"
+    }
+  },
+  "expected": {
+    "callout_count": 1
+  }
+}

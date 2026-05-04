@@ -1,0 +1,10 @@
+{
+  "kind": "holdout",
+  "description": "#1a1a1a on #0e0e0e \u2014 must escalate to AdaptiveDetector (Phase 3.5)",
+  "input": {
+    "video_path": "tests/fixtures/dark-mode.mp4"
+  },
+  "expected": {
+    "future_spec": true
+  }
+}

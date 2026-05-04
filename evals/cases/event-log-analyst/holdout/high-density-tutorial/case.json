@@ -1,0 +1,237 @@
+{
+  "kind": "holdout",
+  "description": "45 meaningful events in 12s \u2014 must NOT over-collapse",
+  "input": {
+    "events": [
+      {
+        "id": "t0",
+        "t": 0.0,
+        "kind": "keydown"
+      },
+      {
+        "id": "t1",
+        "t": 0.25,
+        "kind": "keydown"
+      },
+      {
+        "id": "t2",
+        "t": 0.5,
+        "kind": "keydown"
+      },
+      {
+        "id": "t3",
+        "t": 0.75,
+        "kind": "keydown"
+      },
+      {
+        "id": "t4",
+        "t": 1.0,
+        "kind": "keydown"
+      },
+      {
+        "id": "t5",
+        "t": 1.25,
+        "kind": "keydown"
+      },
+      {
+        "id": "t6",
+        "t": 1.5,
+        "kind": "keydown"
+      },
+      {
+        "id": "t7",
+        "t": 1.75,
+        "kind": "keydown"
+      },
+      {
+        "id": "t8",
+        "t": 2.0,
+        "kind": "keydown"
+      },
+      {
+        "id": "t9",
+        "t": 2.25,
+        "kind": "keydown"
+      },
+      {
+        "id": "t10",
+        "t": 2.5,
+        "kind": "keydown"
+      },
+      {
+        "id": "t11",
+        "t": 2.75,
+        "kind": "keydown"
+      },
+      {
+        "id": "t12",
+        "t": 3.0,
+        "kind": "keydown"
+      },
+      {
+        "id": "t13",
+        "t": 3.25,
+        "kind": "keydown"
+      },
+      {
+        "id": "t14",
+        "t": 3.5,
+        "kind": "keydown"
+      },
+      {
+        "id": "t15",
+        "t": 3.75,
+        "kind": "keydown"
+      },
+      {
+        "id": "t16",
+        "t": 4.0,
+        "kind": "keydown"
+      },
+      {
+        "id": "t17",
+        "t": 4.25,
+        "kind": "keydown"
+      },
+      {
+        "id": "t18",
+        "t": 4.5,
+        "kind": "keydown"
+      },
+      {
+        "id": "t19",
+        "t": 4.75,
+        "kind": "keydown"
+      },
+      {
+        "id": "t20",
+        "t": 5.0,
+        "kind": "keydown"
+      },
+      {
+        "id": "t21",
+        "t": 5.25,
+        "kind": "keydown"
+      },
+      {
+        "id": "t22",
+        "t": 5.5,
+        "kind": "keydown"
+      },
+      {
+        "id": "t23",
+        "t": 5.75,
+        "kind": "keydown"
+      },
+      {
+        "id": "t24",
+        "t": 6.0,
+        "kind": "keydown"
+      },
+      {
+        "id": "t25",
+        "t": 6.25,
+        "kind": "keydown"
+      },
+      {
+        "id": "t26",
+        "t": 6.5,
+        "kind": "keydown"
+      },
+      {
+        "id": "t27",
+        "t": 6.75,
+        "kind": "keydown"
+      },
+      {
+        "id": "t28",
+        "t": 7.0,
+        "kind": "keydown"
+      },
+      {
+        "id": "t29",
+        "t": 7.25,
+        "kind": "keydown"
+      },
+      {
+        "id": "t30",
+        "t": 7.5,
+        "kind": "keydown"
+      },
+      {
+        "id": "t31",
+        "t": 7.75,
+        "kind": "keydown"
+      },
+      {
+        "id": "t32",
+        "t": 8.0,
+        "kind": "keydown"
+      },
+      {
+        "id": "t33",
+        "t": 8.25,
+        "kind": "keydown"
+      },
+      {
+        "id": "t34",
+        "t": 8.5,
+        "kind": "keydown"
+      },
+      {
+        "id": "t35",
+        "t": 8.75,
+        "kind": "keydown"
+      },
+      {
+        "id": "t36",
+        "t": 9.0,
+        "kind": "keydown"
+      },
+      {
+        "id": "t37",
+        "t": 9.25,
+        "kind": "keydown"
+      },
+      {
+        "id": "t38",
+        "t": 9.5,
+        "kind": "keydown"
+      },
+      {
+        "id": "t39",
+        "t": 9.75,
+        "kind": "keydown"
+      },
+      {
+        "id": "t40",
+        "t": 10.0,
+        "kind": "keydown"
+      },
+      {
+        "id": "t41",
+        "t": 10.25,
+        "kind": "keydown"
+      },
+      {
+        "id": "t42",
+        "t": 10.5,
+        "kind": "keydown"
+      },
+      {
+        "id": "t43",
+        "t": 10.75,
+        "kind": "keydown"
+      },
+      {
+        "id": "t44",
+        "t": 11.0,
+        "kind": "keydown"
+      }
+    ],
+    "duration_seconds": 12.0
+  },
+  "expected": {
+    "future_spec": true
+  }
+}

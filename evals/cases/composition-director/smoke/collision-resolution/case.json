@@ -1,0 +1,34 @@
+{
+  "kind": "smoke",
+  "description": "lower-priority overlap dropped",
+  "input": {
+    "captions": [
+      {
+        "id": "c1",
+        "text": "a",
+        "mood": "announce",
+        "anchor_event_id": "e1",
+        "intent_duration": 3.0,
+        "priority": 5
+      },
+      {
+        "id": "c2",
+        "text": "b",
+        "mood": "aside",
+        "anchor_event_id": "e1",
+        "intent_duration": 3.0,
+        "priority": 2
+      }
+    ],
+    "events": [
+      {
+        "id": "e1",
+        "t": 0.0
+      }
+    ]
+  },
+  "expected": {
+    "dropped_count": 1,
+    "kept_count": 1
+  }
+}

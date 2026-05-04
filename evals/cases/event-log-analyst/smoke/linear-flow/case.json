@@ -1,0 +1,49 @@
+{
+  "kind": "smoke",
+  "description": "Linear demo flow: 6 events \u2192 4 scenes",
+  "input": {
+    "events": [
+      {
+        "id": "e1",
+        "t": 0.5,
+        "kind": "navigation",
+        "label": "load"
+      },
+      {
+        "id": "e2",
+        "t": 5.0,
+        "kind": "click",
+        "label": "open"
+      },
+      {
+        "id": "e3",
+        "t": 7.5,
+        "kind": "submit",
+        "label": "save"
+      },
+      {
+        "id": "e4",
+        "t": 12.0,
+        "kind": "modal_open",
+        "label": "ok"
+      },
+      {
+        "id": "e5",
+        "t": 15.0,
+        "kind": "modal_close",
+        "label": "done"
+      },
+      {
+        "id": "e6",
+        "t": 20.0,
+        "kind": "navigation",
+        "label": "next"
+      }
+    ],
+    "duration_seconds": 25.0
+  },
+  "expected": {
+    "scenes_count_min": 3,
+    "events_round_trip": true
+  }
+}

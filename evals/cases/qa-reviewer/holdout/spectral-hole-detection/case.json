@@ -1,0 +1,10 @@
+{
+  "kind": "holdout",
+  "description": "Music has 1.8-3.2 kHz notch \u2014 qa-reviewer must flag MUSIC_SPECTRAL_HOLE (Phase 8.5)",
+  "input": {
+    "future_spec": true
+  },
+  "expected": {
+    "future_spec": true
+  }
+}

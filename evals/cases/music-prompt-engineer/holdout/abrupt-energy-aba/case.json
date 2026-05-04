@@ -1,0 +1,10 @@
+{
+  "kind": "holdout",
+  "description": "Scene energies high\u2192low\u2192high \u2014 agent must NOT over-engineer two-section structure (Phase 4.5)",
+  "input": {
+    "future_spec": true
+  },
+  "expected": {
+    "future_spec": true
+  }
+}

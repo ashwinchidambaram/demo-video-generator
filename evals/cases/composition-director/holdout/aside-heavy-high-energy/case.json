@@ -1,0 +1,10 @@
+{
+  "kind": "holdout",
+  "description": "high motion + aside-heavy captions \u2192 explain-soft (mood beats energy) \u2014 covered in test_composition.py",
+  "input": {
+    "covered_in_test": true
+  },
+  "expected": {
+    "covered_in_test": true
+  }
+}

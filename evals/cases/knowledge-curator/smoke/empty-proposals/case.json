@@ -1,0 +1,8 @@
+{
+  "kind": "smoke",
+  "description": "Skeleton emits empty proposals.json (no LLM yet)",
+  "input": {},
+  "expected": {
+    "proposals_count": 0
+  }
+}

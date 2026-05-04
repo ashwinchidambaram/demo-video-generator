@@ -1,0 +1,11 @@
+{
+  "kind": "holdout",
+  "description": "SPA with pushState only \u2014 agent must inject popstate proxy listener (Phase 2.5)",
+  "input": {
+    "input_kind": "url",
+    "input_value": "http://x/spa"
+  },
+  "expected": {
+    "future_spec": true
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "kind": "holdout",
+  "description": "50s demo via Lyria preview stitching \u2014 boundary-click detection (Phase 4.5; needs Lyria)",
+  "input": {
+    "future_spec": true
+  },
+  "expected": {
+    "future_spec": true
+  }
+}

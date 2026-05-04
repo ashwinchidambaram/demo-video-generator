@@ -1,0 +1,38 @@
+{
+  "kind": "smoke",
+  "description": "announce/callout/punchline/tagline emit duck_window; explain/aside don't",
+  "input": {
+    "captions": [
+      {
+        "id": "c1",
+        "text": "x",
+        "mood": "announce",
+        "anchor_event_id": "e1",
+        "intent_duration": 2.0,
+        "priority": 5
+      },
+      {
+        "id": "c2",
+        "text": "y",
+        "mood": "explain",
+        "anchor_event_id": "e2",
+        "intent_duration": 2.0,
+        "priority": 4
+      }
+    ],
+    "events": [
+      {
+        "id": "e1",
+        "t": 0.5
+      },
+      {
+        "id": "e2",
+        "t": 5.0
+      }
+    ]
+  },
+  "expected": {
+    "duck_announce_present": true,
+    "duck_explain_null": true
+  }
+}

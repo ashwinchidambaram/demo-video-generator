@@ -1,0 +1,10 @@
+{
+  "kind": "holdout",
+  "description": "punchline-anchored event tempts cartoonish sound \u2014 must stay 'Linear not Mario'",
+  "input": {
+    "future_spec": true
+  },
+  "expected": {
+    "future_spec": true
+  }
+}

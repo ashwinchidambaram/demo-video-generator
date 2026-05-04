@@ -1,0 +1,16 @@
+{
+  "kind": "smoke",
+  "description": "Visual analysis confined to a gap interval; outputs never exceed window",
+  "input": {
+    "video_path": "demo-deliverable.mp4",
+    "gap_intervals": [
+      [
+        10.0,
+        18.0
+      ]
+    ]
+  },
+  "expected": {
+    "all_scenes_within_gap": true
+  }
+}

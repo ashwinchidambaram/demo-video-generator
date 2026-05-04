@@ -1,0 +1,10 @@
+{
+  "kind": "smoke",
+  "description": "0 events \u2192 empty placements manifest, schema-valid",
+  "input": {
+    "events": []
+  },
+  "expected": {
+    "placements_count": 0
+  }
+}

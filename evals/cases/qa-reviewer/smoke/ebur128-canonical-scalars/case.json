@@ -1,0 +1,10 @@
+{
+  "kind": "smoke",
+  "description": "ebur128 returns rounded integrated_lufs + true_peak_dbtp",
+  "input": {
+    "final_mp4": "demo-deliverable.mp4"
+  },
+  "expected": {
+    "ebur128_canonical_scalars_present": true
+  }
+}

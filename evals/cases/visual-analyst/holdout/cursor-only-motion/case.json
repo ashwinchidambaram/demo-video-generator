@@ -1,0 +1,10 @@
+{
+  "kind": "holdout",
+  "description": "Static screen with cursor moving \u2014 should emit ONE energy=low scene, not over-segment (Phase 3.5; needs LLM-on-keyframes)",
+  "input": {
+    "video_path": "tests/fixtures/cursor-only.mp4"
+  },
+  "expected": {
+    "future_spec": true
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "kind": "smoke",
+  "description": "Parses Pin facts and Sources sections per refresh-protocol.md",
+  "input": {},
+  "expected": {
+    "required_sections_parsed": true
+  }
+}

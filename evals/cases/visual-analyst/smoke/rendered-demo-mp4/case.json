@@ -1,0 +1,11 @@
+{
+  "kind": "smoke",
+  "description": "demo-deliverable.mp4 has 6 scene transitions; detector should find \u22651",
+  "input": {
+    "video_path": "demo-deliverable.mp4",
+    "duration_seconds": 32.0
+  },
+  "expected": {
+    "scenes_count_min": 1
+  }
+}

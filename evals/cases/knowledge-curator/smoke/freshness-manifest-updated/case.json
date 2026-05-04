@@ -1,0 +1,8 @@
+{
+  "kind": "smoke",
+  "description": "runs/refresh/manifest.json gets last_run + per-agent staleness",
+  "input": {},
+  "expected": {
+    "manifest_has_last_run": true
+  }
+}

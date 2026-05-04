@@ -1,0 +1,17 @@
+{
+  "kind": "smoke",
+  "description": "Event ids round-trip byte-identical (caption anchor invariant)",
+  "input": {
+    "events": [
+      {
+        "id": "very-stable-id",
+        "t": 1.0,
+        "kind": "click"
+      }
+    ],
+    "duration_seconds": 5.0
+  },
+  "expected": {
+    "events_round_trip": true
+  }
+}

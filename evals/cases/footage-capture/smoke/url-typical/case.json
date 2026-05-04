@@ -1,0 +1,13 @@
+{
+  "kind": "smoke",
+  "description": "URL input \u2192 synthetic placeholder + valid events.json",
+  "input": {
+    "input_kind": "url",
+    "input_value": "http://localhost:0/"
+  },
+  "expected": {
+    "footage_path_exists": true,
+    "events_log_schema_version": 1,
+    "duration_seconds_default": 10.0
+  }
+}

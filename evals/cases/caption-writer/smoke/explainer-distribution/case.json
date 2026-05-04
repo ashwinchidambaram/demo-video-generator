@@ -1,0 +1,19 @@
+{
+  "kind": "smoke",
+  "description": "3 explainers across 5 events \u2192 distributed",
+  "input": {
+    "brief": {
+      "title": "X",
+      "explainers": [
+        "one",
+        "two",
+        "three"
+      ],
+      "tagline": "Y"
+    },
+    "event_count": 5
+  },
+  "expected": {
+    "explain_count": 3
+  }
+}

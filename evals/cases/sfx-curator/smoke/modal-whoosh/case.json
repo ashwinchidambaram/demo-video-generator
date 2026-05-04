@@ -1,0 +1,16 @@
+{
+  "kind": "smoke",
+  "description": "modal_open \u2192 modal_whoosh_01.wav",
+  "input": {
+    "events": [
+      {
+        "id": "e1",
+        "t": 1.0,
+        "kind": "modal_open"
+      }
+    ]
+  },
+  "expected": {
+    "placements_with_clip": "modal_whoosh_01"
+  }
+}

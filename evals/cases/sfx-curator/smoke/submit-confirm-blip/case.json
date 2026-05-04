@@ -1,0 +1,16 @@
+{
+  "kind": "smoke",
+  "description": "submit event \u2192 confirm_blip_01.wav",
+  "input": {
+    "events": [
+      {
+        "id": "e1",
+        "t": 1.0,
+        "kind": "submit"
+      }
+    ]
+  },
+  "expected": {
+    "placements_with_clip": "confirm_blip_01"
+  }
+}

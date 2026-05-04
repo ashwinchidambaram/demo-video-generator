@@ -1,0 +1,10 @@
+{
+  "kind": "holdout",
+  "description": "Form fails validation; LLM must NOT apologize ('oops!') \u2014 matter-of-fact voice (Phase 7.5; LLM-driven)",
+  "input": {
+    "future_spec": true
+  },
+  "expected": {
+    "future_spec": true
+  }
+}

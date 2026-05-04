@@ -1,0 +1,10 @@
+{
+  "kind": "holdout",
+  "description": "SFX placements drift 250ms from event timestamps \u2014 must flag SFX_ONSET_MISALIGNED (Phase 8.5)",
+  "input": {
+    "future_spec": true
+  },
+  "expected": {
+    "future_spec": true
+  }
+}

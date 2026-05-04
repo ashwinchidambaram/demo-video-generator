@@ -1,0 +1,11 @@
+{
+  "kind": "smoke",
+  "description": "hint='flow' picks vibe-flow.mp3 over others",
+  "input": {
+    "soundtrack_dir": "/Users/ashwinchidambaram/dev/projects/wipro/demo/soundtracks",
+    "hint": "flow"
+  },
+  "expected": {
+    "source_name_contains": "flow"
+  }
+}

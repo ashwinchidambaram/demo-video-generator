@@ -1,0 +1,11 @@
+{
+  "kind": "smoke",
+  "description": "Long video \u2192 keyframes capped at 8/min",
+  "input": {
+    "video_path": "demo-deliverable.mp4",
+    "duration_seconds": 32.0
+  },
+  "expected": {
+    "scenes_count_max": 8
+  }
+}

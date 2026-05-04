@@ -1,0 +1,11 @@
+{
+  "kind": "holdout",
+  "description": "macOS TCC denied \u2192 error.json with code TCC_DENIED, retryable=false (Phase 2.5; gated on real Playwright path)",
+  "input": {
+    "input_kind": "url",
+    "input_value": "http://x/"
+  },
+  "expected": {
+    "future_spec": true
+  }
+}

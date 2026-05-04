@@ -1,0 +1,12 @@
+{
+  "kind": "smoke",
+  "description": "kind=screen \u2192 synthetic until ffmpeg avfoundation lands",
+  "input": {
+    "input_kind": "screen",
+    "input_value": "screen"
+  },
+  "expected": {
+    "events_count": 0,
+    "duration_seconds_default": 10.0
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "kind": "smoke",
+  "description": "Pick vibe-flow \u2192 music.mp3 size > 100KB",
+  "input": {
+    "soundtrack_dir": "/Users/ashwinchidambaram/dev/projects/wipro/demo/soundtracks",
+    "hint": "flow"
+  },
+  "expected": {
+    "music_size_bytes_min": 100000
+  }
+}

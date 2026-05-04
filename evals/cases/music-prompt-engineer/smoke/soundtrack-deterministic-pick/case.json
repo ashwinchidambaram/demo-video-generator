@@ -1,0 +1,11 @@
+{
+  "kind": "smoke",
+  "description": "Same run_id_seed \u2192 same track each time",
+  "input": {
+    "soundtrack_dir": "/Users/ashwinchidambaram/dev/projects/wipro/demo/soundtracks",
+    "run_id_seed": "stable"
+  },
+  "expected": {
+    "deterministic": true
+  }
+}

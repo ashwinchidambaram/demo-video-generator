@@ -1,0 +1,11 @@
+{
+  "kind": "smoke",
+  "description": "music_meta.json sidecar emitted with mode/source/verification",
+  "input": {
+    "soundtrack_dir": "/Users/ashwinchidambaram/dev/projects/wipro/demo/soundtracks"
+  },
+  "expected": {
+    "meta_has_source": true,
+    "meta_has_verification": true
+  }
+}

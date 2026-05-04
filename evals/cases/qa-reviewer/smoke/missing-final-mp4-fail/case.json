@@ -1,0 +1,10 @@
+{
+  "kind": "smoke",
+  "description": "Missing final.mp4 \u2192 signoff: fail with FINAL_MP4_MISSING",
+  "input": {
+    "final_mp4": "/nonexistent.mp4"
+  },
+  "expected": {
+    "signoff": "fail"
+  }
+}

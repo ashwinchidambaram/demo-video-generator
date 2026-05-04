@@ -1,0 +1,14 @@
+{
+  "kind": "smoke",
+  "description": "demo-deliverable.mp4 \u2192 signoff: pass or warn (low LUFS), no high-severity",
+  "input": {
+    "final_mp4": "demo-deliverable.mp4"
+  },
+  "expected": {
+    "signoff_in": [
+      "pass",
+      "warn"
+    ],
+    "no_high_severity": true
+  }
+}

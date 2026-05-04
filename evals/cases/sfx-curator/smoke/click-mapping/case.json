@@ -1,0 +1,16 @@
+{
+  "kind": "smoke",
+  "description": "click event \u2192 click_soft_01.wav placement",
+  "input": {
+    "events": [
+      {
+        "id": "e1",
+        "t": 1.0,
+        "kind": "click"
+      }
+    ]
+  },
+  "expected": {
+    "placements_count_min": 1
+  }
+}

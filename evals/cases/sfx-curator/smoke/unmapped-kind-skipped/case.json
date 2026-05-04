@@ -1,0 +1,16 @@
+{
+  "kind": "smoke",
+  "description": "Unknown event kind \u2192 no placement, no error",
+  "input": {
+    "events": [
+      {
+        "id": "e1",
+        "t": 1.0,
+        "kind": "weird_kind"
+      }
+    ]
+  },
+  "expected": {
+    "placements_count": 0
+  }
+}

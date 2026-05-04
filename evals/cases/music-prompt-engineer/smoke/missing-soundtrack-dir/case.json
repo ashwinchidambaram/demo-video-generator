@@ -1,0 +1,10 @@
+{
+  "kind": "smoke",
+  "description": "No soundtrack dir \u2192 falls back to placeholder",
+  "input": {
+    "soundtrack_dir": null
+  },
+  "expected": {
+    "placeholder_marker": true
+  }
+}

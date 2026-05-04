@@ -1,0 +1,10 @@
+{
+  "kind": "smoke",
+  "description": "Every visual scene must carry source='visual'",
+  "input": {
+    "video_path": "demo-deliverable.mp4"
+  },
+  "expected": {
+    "all_source_visual": true
+  }
+}

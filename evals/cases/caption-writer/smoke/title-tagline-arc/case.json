@@ -1,0 +1,15 @@
+{
+  "kind": "smoke",
+  "description": "Brief with title + tagline \u2192 announce + tagline emitted",
+  "input": {
+    "brief": {
+      "title": "Switchboard",
+      "tagline": "Calls that route themselves."
+    }
+  },
+  "expected": {
+    "captions_count_min": 2,
+    "first_mood": "announce",
+    "last_mood": "tagline"
+  }
+}

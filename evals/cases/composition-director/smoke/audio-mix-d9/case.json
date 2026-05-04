@@ -1,0 +1,10 @@
+{
+  "kind": "smoke",
+  "description": "Default audio.mix targets match D9",
+  "input": {},
+  "expected": {
+    "integrated_lufs": -14,
+    "true_peak_dbtp": -1,
+    "duck_to_lufs": -22
+  }
+}

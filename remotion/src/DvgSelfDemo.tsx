@@ -649,7 +649,8 @@ export const DvgSelfDemo: React.FC<Props> = ({ musicSrc, hasMusic = true }) => {
         <FinalScene />
       </Sequence>
 
-      {hasMusic && resolvedMusic && <Audio src={resolvedMusic} volume={0.7} />}
+      {/* Volume tuned to land integrated LUFS within ±1 of D9 target (-14 LUFS). */}
+      {hasMusic && resolvedMusic && <Audio src={resolvedMusic} volume={0.85} />}
     </AbsoluteFill>
   );
 };

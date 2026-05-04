@@ -1,0 +1,9 @@
+{
+  "kind": "smoke",
+  "description": "Walks all 9 agents' refresh.md and produces a report",
+  "input": {},
+  "expected": {
+    "report_path_exists": true,
+    "agents_inspected": 9
+  }
+}

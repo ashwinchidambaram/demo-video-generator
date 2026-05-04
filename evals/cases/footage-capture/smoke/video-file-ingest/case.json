@@ -1,0 +1,13 @@
+{
+  "kind": "smoke",
+  "description": "Pre-recorded video file \u2192 file-ingest path",
+  "input": {
+    "input_kind": "video",
+    "input_value": "demo-deliverable.mp4"
+  },
+  "expected": {
+    "footage_size_bytes_min": 1024,
+    "events_log_schema_version": 1,
+    "events_count": 0
+  }
+}

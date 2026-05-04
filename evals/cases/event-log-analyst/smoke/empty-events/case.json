@@ -1,0 +1,13 @@
+{
+  "kind": "smoke",
+  "description": "No events \u2192 visual-source placeholder + synthetic anchors",
+  "input": {
+    "events": [],
+    "duration_seconds": 10.0
+  },
+  "expected": {
+    "scenes_count": 1,
+    "first_scene_source": "visual",
+    "synthetic_events_min": 3
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "kind": "smoke",
+  "description": "events.json has fps + resolution + events array",
+  "input": {
+    "input_kind": "url",
+    "input_value": "http://x/"
+  },
+  "expected": {
+    "events_log_has_fps": true,
+    "events_log_has_resolution": true
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "kind": "holdout",
+  "description": "_shared/remotion.md says trimLeft, cached docs say trimBefore \u2014 must propose correction with citation (Phase 10.5; needs WebFetch + LLM)",
+  "input": {
+    "future_spec": true
+  },
+  "expected": {
+    "future_spec": true
+  }
+}

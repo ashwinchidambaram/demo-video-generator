@@ -1,0 +1,10 @@
+{
+  "kind": "holdout",
+  "description": "anchor_event_id refers to nonexistent event \u2014 must emit error.json, not produce composition.json (Phase 6.5)",
+  "input": {
+    "future_spec": true
+  },
+  "expected": {
+    "future_spec": true
+  }
+}

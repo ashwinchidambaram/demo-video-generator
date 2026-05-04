@@ -1,0 +1,14 @@
+{
+  "kind": "smoke",
+  "description": "Punchline gets priority 5 by default",
+  "input": {
+    "brief": {
+      "title": "X",
+      "punchline": "Done.",
+      "tagline": "Y"
+    }
+  },
+  "expected": {
+    "punchline_priority": 5
+  }
+}

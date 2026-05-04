@@ -1,0 +1,10 @@
+{
+  "kind": "holdout",
+  "description": "Cached source has fact in two phrasings \u2014 curator must pick verbatim form (Phase 10.5)",
+  "input": {
+    "future_spec": true
+  },
+  "expected": {
+    "future_spec": true
+  }
+}

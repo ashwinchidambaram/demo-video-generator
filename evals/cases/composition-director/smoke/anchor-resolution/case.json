@@ -1,0 +1,26 @@
+{
+  "kind": "smoke",
+  "description": "captions resolve to absolute (start, end) per D4",
+  "input": {
+    "captions": [
+      {
+        "id": "c1",
+        "text": "x",
+        "mood": "announce",
+        "anchor_event_id": "e1",
+        "intent_duration": 2.0,
+        "priority": 5
+      }
+    ],
+    "events": [
+      {
+        "id": "e1",
+        "t": 1.0
+      }
+    ]
+  },
+  "expected": {
+    "first_caption_start": 1.0,
+    "first_caption_end": 3.0
+  }
+}

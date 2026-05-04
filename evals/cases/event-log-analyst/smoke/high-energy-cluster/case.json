@@ -1,0 +1,22 @@
+{
+  "kind": "smoke",
+  "description": "submit + modal_open in cluster \u2192 energy=high",
+  "input": {
+    "events": [
+      {
+        "id": "a",
+        "t": 1.0,
+        "kind": "click"
+      },
+      {
+        "id": "b",
+        "t": 1.3,
+        "kind": "submit"
+      }
+    ],
+    "duration_seconds": 5.0
+  },
+  "expected": {
+    "first_scene_energy": "high"
+  }
+}

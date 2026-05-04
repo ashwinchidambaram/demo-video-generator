@@ -1,0 +1,11 @@
+{
+  "kind": "smoke",
+  "description": "ffprobe metadata has h264 + aac",
+  "input": {
+    "final_mp4": "demo-deliverable.mp4"
+  },
+  "expected": {
+    "video_codec": "h264",
+    "audio_codec": "aac"
+  }
+}

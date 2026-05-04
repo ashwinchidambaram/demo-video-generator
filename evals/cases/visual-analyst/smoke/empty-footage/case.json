@@ -1,0 +1,11 @@
+{
+  "kind": "smoke",
+  "description": "0-byte placeholder \u2192 no visual scenes",
+  "input": {
+    "video_path_size_bytes": 0,
+    "duration_seconds": 10.0
+  },
+  "expected": {
+    "scenes_count": 0
+  }
+}

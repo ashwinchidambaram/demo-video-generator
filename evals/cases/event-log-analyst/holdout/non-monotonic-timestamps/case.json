@@ -1,0 +1,22 @@
+{
+  "kind": "holdout",
+  "description": "Replayed events with non-monotonic t \u2014 must EMIT EVENTS_OUT_OF_ORDER, not silently sort. Tests resistance to 'be helpful'.",
+  "input": {
+    "events": [
+      {
+        "id": "a",
+        "t": 1.0,
+        "kind": "click"
+      },
+      {
+        "id": "b",
+        "t": 0.92,
+        "kind": "click"
+      }
+    ],
+    "duration_seconds": 5.0
+  },
+  "expected": {
+    "future_spec": true
+  }
+}

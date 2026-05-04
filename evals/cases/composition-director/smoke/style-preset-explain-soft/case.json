@@ -1,0 +1,18 @@
+{
+  "kind": "smoke",
+  "description": "explain-heavy + low energy \u2192 explain-soft",
+  "input": {
+    "moods": [
+      "explain",
+      "explain",
+      "explain"
+    ],
+    "energies": [
+      "low",
+      "low"
+    ]
+  },
+  "expected": {
+    "preset": "explain-soft"
+  }
+}

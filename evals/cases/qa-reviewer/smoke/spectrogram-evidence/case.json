@@ -1,0 +1,10 @@
+{
+  "kind": "smoke",
+  "description": "sox spectrogram emitted as evidence",
+  "input": {
+    "final_mp4": "demo-deliverable.mp4"
+  },
+  "expected": {
+    "spectrogram_path_present": true
+  }
+}

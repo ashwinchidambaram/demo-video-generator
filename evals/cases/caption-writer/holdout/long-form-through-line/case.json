@@ -1,0 +1,10 @@
+{
+  "kind": "holdout",
+  "description": "60s, 3 sub-features \u2014 tagline must reference opening (LLM judgment)",
+  "input": {
+    "future_spec": true
+  },
+  "expected": {
+    "future_spec": true
+  }
+}

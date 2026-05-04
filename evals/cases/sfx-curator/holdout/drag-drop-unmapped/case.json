@@ -1,0 +1,10 @@
+{
+  "kind": "holdout",
+  "description": "drag_and_drop kind never seen \u2014 agent must apply taste rules, not memorized table (Phase 5.5; LLM-driven)",
+  "input": {
+    "future_spec": true
+  },
+  "expected": {
+    "future_spec": true
+  }
+}
