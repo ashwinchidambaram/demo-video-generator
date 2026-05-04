@@ -338,7 +338,6 @@ def _prepare_image_layer(
             f"fade=t=out:st={il.duration - il.fade_out:.3f}:d={il.fade_out:.3f}:alpha=1,"
         )
     if il.time[0] > 0:
-        delay_ms = int(il.time[0] * 1000)
         chain += f"setpts=PTS+{il.time[0]:.6f}/TB,"
     chain = chain.rstrip(",")
     chain += f"[i{idx}]"

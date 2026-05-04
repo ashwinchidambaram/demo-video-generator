@@ -6,7 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from dvg.analysis.events import Analysis, Anchor as EventAnchor, Scene
+from dvg.analysis.events import Analysis, Scene
+from dvg.analysis.events import Anchor as EventAnchor
 from dvg.director.heuristic import DirectorContext, plan_composition
 from dvg.models import CaptionLayer, TitleLayer, VideoLayer
 

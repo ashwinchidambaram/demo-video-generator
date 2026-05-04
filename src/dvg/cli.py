@@ -251,7 +251,7 @@ def direct(
     table.add_row("composition", str(out))
     table.add_row("duration", f"{comp.duration:.2f}s")
     table.add_row("layers", str(len(comp.layers)))
-    table.add_row("captions", str(sum(1 for l in comp.layers if l.kind == "caption")))
+    table.add_row("captions", str(sum(1 for layer in comp.layers if layer.kind == "caption")))
     table.add_row("audio", comp.audio[0].src.name if comp.audio else "—")
     console.print(table)
 
@@ -327,7 +327,7 @@ def make_video(
     )
     comp = director_plan(ctx)
     comp.save(run_dir / "composition.json")
-    n_caps = sum(1 for l in comp.layers if l.kind == "caption")
+    n_caps = sum(1 for layer in comp.layers if layer.kind == "caption")
     console.print(
         f"  [green]✓[/green] direct: {n_caps} captions, "
         f"music={comp.audio[0].src.name}"

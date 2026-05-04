@@ -132,7 +132,7 @@ class _State:
 class _Handler(http.server.SimpleHTTPRequestHandler):
     state: _State  # set on subclass
 
-    def do_GET(self) -> None:  # noqa: N802
+    def do_GET(self) -> None:
         url = urllib.parse.urlparse(self.path)
         if url.path == "/" or url.path == "/index.html":
             html = (
@@ -175,7 +175,7 @@ class _Handler(http.server.SimpleHTTPRequestHandler):
         else:
             self.send_error(404)
 
-    def log_message(self, format: str, *args: object) -> None:  # noqa: A002
+    def log_message(self, format: str, *args: object) -> None:
         # silent
         return
 
