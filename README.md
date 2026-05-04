@@ -257,6 +257,16 @@ dvg new my_demo.json --duration 15
 dvg new my_demo.py --duration 15 --style py
 ```
 
+### Live preview while editing
+
+```bash
+dvg preview composition.json --port 8765
+```
+
+Opens a local server with a scrubbable timeline. Edit `composition.json`
+and the preview re-renders automatically (mtime-watched). No bundle step;
+the cached MP4 lives in `/tmp` and is regenerated only when the source changes.
+
 Both forms emit a starter file with title intro, video, captions, and end-card placeholders. Edit the `src` paths and run.
 
 ## Comparison with the original plan

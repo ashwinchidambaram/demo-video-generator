@@ -105,4 +105,5 @@ dvg validate <comp.json>                       # schema check
 dvg schema -o <path>                           # export Composition JSON Schema
 dvg frame <comp.json> --t <s> -o <png>          # extract a single frame
 dvg contact-sheet <comp.json> --cols N --rows M  # tile preview grid
+dvg preview <comp.json> --port 8765              # live preview server
 ```
