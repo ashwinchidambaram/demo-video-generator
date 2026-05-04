@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://demo-video-generator/schemas/qa.schema.json",
+  "title": "QA",
+  "description": "qa-reviewer signoff document. Issues carry severity (high/medium/low) per the ladder defined in qa-reviewer/knowledge/core.md, plus a proposed_action enum the driver may auto-retry against the AUTO_RETRY_ALLOWLIST.",
+  "type": "object",
+  "required": ["schema_version", "signoff"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "signoff": {"type": "string", "enum": ["pass", "warn", "fail"]},
+    "issues": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/Issue"}
+    },
+    "measurements": {"type": "object", "additionalProperties": true},
+    "evidence_paths": {"type": "array", "items": {"type": "string"}}
+  },
+  "$defs": {
+    "Issue": {
+      "type": "object",
+      "required": ["code", "severity"],
+      "additionalProperties": false,
+      "properties": {
+        "code": {"type": "string"},
+        "severity": {"type": "string", "enum": ["high", "medium", "low"]},
+        "stage": {"type": "string"},
+        "evidence": {"type": "object", "additionalProperties": true},
+        "proposed_action": {
+          "type": "object",
+          "required": ["kind"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {"type": "string", "enum": ["regenerate_stage", "escalate", "accept_with_warning"]},
+            "target_stage": {"type": "string"},
+            "hint": {"type": "string"}
+          }
+        }
+      }
+    }
+  }
+}

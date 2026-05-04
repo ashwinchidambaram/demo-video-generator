@@ -56,6 +56,9 @@ agents:
 check-contracts:
 	uv run python -m demo_video_generator.tools.check_contracts
 
+qa-codes:
+	uv run python -m demo_video_generator.tools.compile_qa_codes
+
 test:
 	uv run pytest
 

@@ -38,21 +38,14 @@ from .sfx import stub_sfx
 console = Console()
 
 
-# Hard-allowlist of qa.json issue codes the driver may auto-retry without
-# user intervention (per ultraplan R3 / qa-reviewer agent design). Codes
-# outside this set escalate to the user even if proposed_action says
-# regenerate_stage. This mirrors the agent design's "scope creep into
-# fixes" safeguard.
-AUTO_RETRY_ALLOWLIST: frozenset[str] = frozenset(
-    {
-        "MUSIC_BPM_OFF_TARGET",
-        "MIX_TRUEPEAK_EXCEEDED",
-        "MIX_LUFS_OFF_TARGET",
-        "CAPTION_OUT_OF_FRAME",
-        "DEAD_AIR",
-        "FINAL_MP4_MISSING",
-    }
-)
+# Auto-retry allowlist: imported from the codegen module (make qa-codes)
+# which parses .claude/agents/qa-reviewer/knowledge/core.md as source of
+# truth. Single registry — no manual sync between run.py and the agent
+# prompt. Falls back to an empty frozenset if codegen hasn't run yet.
+try:
+    from .review.codes import AUTO_RETRY_ALLOWLIST
+except ImportError:
+    AUTO_RETRY_ALLOWLIST: frozenset[str] = frozenset()  # type: ignore[no-redef]
 
 
 @dataclass(slots=True)

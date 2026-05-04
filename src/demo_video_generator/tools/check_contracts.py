@@ -71,22 +71,28 @@ def main() -> int:
             ack_codes = set(driver_ack.split(":", 1)[1].split("|"))
         except IndexError:
             ack_codes = set()
+        # Driver allowlist is codegen-derived (make qa-codes) from the YAML
+        # registry in qa-reviewer/knowledge/core.md. Import the generated
+        # module directly rather than parsing run.py.
         try:
-            run_py = (REPO_ROOT / "src" / "demo_video_generator" / "run.py").read_text()
-            # Extract the AUTO_RETRY_ALLOWLIST block.
-            import re
+            import importlib.util
 
-            m = re.search(
-                r"AUTO_RETRY_ALLOWLIST.*?frozenset\((.*?)\)", run_py, re.DOTALL
+            codes_path = (
+                REPO_ROOT / "src" / "demo_video_generator" / "review" / "codes.py"
             )
-            if m:
-                # Pull the literal string contents.
-                literal = m.group(1)
-                code_strings = re.findall(r'"([A-Z][A-Z0-9_]+)"', literal)
-                driver_codes = set(code_strings)
+            if codes_path.is_file():
+                spec = importlib.util.spec_from_file_location(
+                    "dvg_codes", codes_path
+                )
+                if spec is not None and spec.loader is not None:
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+                    driver_codes = set(module.AUTO_RETRY_ALLOWLIST)
+                else:
+                    driver_codes = set()
             else:
                 driver_codes = set()
-        except OSError:
+        except Exception:
             driver_codes = set()
         if ack_codes and driver_codes and ack_codes != driver_codes:
             extra_in_ack = ack_codes - driver_codes

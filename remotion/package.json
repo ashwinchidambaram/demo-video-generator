@@ -6,7 +6,7 @@
   "scripts": {
     "preview": "remotion studio src/Root.tsx",
     "render": "tsx src/render.ts",
-    "gen-schemas": "json-schema-to-zod -i ../schemas/composition.schema.json -o src/schemas/composition.zod.ts && json-schema-to-zod -i ../schemas/captions.schema.json -o src/schemas/captions.zod.ts && json-schema-to-zod -i ../schemas/analysis.schema.json -o src/schemas/analysis.zod.ts && json-schema-to-zod -i ../schemas/manifest.schema.json -o src/schemas/manifest.zod.ts && json-schema-to-zod -i ../schemas/error.schema.json -o src/schemas/error.zod.ts",
+    "gen-schemas": "json-schema-to-zod -i ../schemas/composition.schema.json -o src/schemas/composition.zod.ts && json-schema-to-zod -i ../schemas/captions.schema.json -o src/schemas/captions.zod.ts && json-schema-to-zod -i ../schemas/analysis.schema.json -o src/schemas/analysis.zod.ts && json-schema-to-zod -i ../schemas/manifest.schema.json -o src/schemas/manifest.zod.ts && json-schema-to-zod -i ../schemas/error.schema.json -o src/schemas/error.zod.ts && json-schema-to-zod -i ../schemas/qa.schema.json -o src/schemas/qa.zod.ts",
     "format:check": "prettier --check 'src/**/*.{ts,tsx}'",
     "format": "prettier --write 'src/**/*.{ts,tsx}'"
   },
