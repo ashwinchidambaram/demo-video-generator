@@ -3,9 +3,20 @@
 ## What to look at first
 
 1. **`runs/_demos/dvg_demo_v1.mp4`** — The primary deliverable. 22 s, 1080 p, MP4. Made with dvg.
-2. **`runs/_demos/dvg_short_v1.mp4`** — Short-form variant (10 s, vibe-flow soundtrack).
+2. **`runs/_demos/dvg_demo_v1_contact_sheet.png`** — 4×3 visual preview of the demo (no playback needed).
 3. **`README.md`** — Sells the tool; includes vs-Remotion comparison + full architecture.
 4. **`runs/_demos/dvg_demo_v1_composition.json`** — The Composition that produced the demo.
+
+## Other demos worth a look
+
+* **`dvg_short_v1.mp4`** — short-form 10 s variant on `vibe-flow.mp3`.
+* **`dvg_moods_v1.mp4`** — caption-mood reference card (every preset, in order).
+* **`dvg_sequence_v1.mp4`** — Sequence composability proof: built from two nested 9 s sub-compositions.
+* **`dvg_external_v2.mp4`** — example.com captured with `--narrations` flag (8 s).
+* **`h2_animated.mp4`** — keyframe transform demo (logo slide-in with `ease_out`).
+* **`h1/final.mp4`** — first end-to-end render from the morning sprint.
+
+All `*.composition.json` paired with each so you can re-render or edit.
 
 ## What was built
 
@@ -66,12 +77,32 @@ The default Homebrew `ffmpeg` formula does **not** include libass. Use `homebrew
 
 ## Where to start in the morning
 
-* Watch `runs/_demos/dvg_demo_v1.mp4`.
-* Watch `runs/_demos/dvg_short_v1.mp4`.
-* If you want to see dvg run end-to-end on something new:
-  ```
-  cd .worktrees/inventing-new-solutions
-  uv run dvg make-video https://example.com --duration 8 --headless \
-     --title "example.com" --tagline "captured by dvg"
-  ```
-* Compare to `main`'s `.claude/plans/v2-implementation-plan.md` if you want the side-by-side rationale.
+1. Look at `runs/_demos/dvg_demo_v1_contact_sheet.png` first — quick visual.
+2. Watch `runs/_demos/dvg_demo_v1.mp4` (the flagship).
+3. Watch `runs/_demos/dvg_short_v1.mp4` for the variant.
+4. If you want to see dvg run end-to-end on something new:
+   ```
+   cd .worktrees/inventing-new-solutions
+   uv run dvg make-video https://example.com --duration 8 --headless \
+      --title "example.com" --tagline "captured by dvg"
+   ```
+5. Compare to `main`'s `.claude/plans/v2-implementation-plan.md` if you want the side-by-side rationale.
+
+## Full CLI
+
+```
+dvg version | doctor                          # setup verification
+dvg new <out>                                  # scaffold a starter composition
+dvg capture <url> -o <run-dir> -d <s>           # Playwright capture
+dvg analyze <run-dir> --duration <s>           # events → scenes + anchors
+dvg direct <run-dir> --url <…> [--narrations]   # heuristic director
+dvg render <comp.json> -o <out.mp4>            # single-shot ffmpeg render
+dvg make-video <url> -o <out.mp4>              # all four stages end-to-end
+dvg review <out.mp4>                           # audio + visual QA (PASS/FAIL)
+dvg telemetry                                  # aggregate runs/_telemetry.jsonl
+dvg plan <comp.json>                           # show render plan, no work done
+dvg validate <comp.json>                       # schema check
+dvg schema -o <path>                           # export Composition JSON Schema
+dvg frame <comp.json> --t <s> -o <png>          # extract a single frame
+dvg contact-sheet <comp.json> --cols N --rows M  # tile preview grid
+```
