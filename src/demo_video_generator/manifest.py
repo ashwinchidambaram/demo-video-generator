@@ -50,7 +50,7 @@ DEFAULT_PIPELINE: list[dict[str, Any]] = [
     },
     {
         "name": "sfx",
-        "artifact": "sfx/.placeholder",  # directory artifact; presence of marker = done
+        "artifact": "sfx/manifest.json",  # sfx-curator writes a manifest of placements; .wav files are siblings
         "owner": "sfx-curator",
         "depends_on": ["analyze"],
     },
@@ -99,6 +99,7 @@ def new_manifest(run_id: str, input_kind: str, input_value: str) -> dict[str, An
                 "started_at": None,
                 "finished_at": None,
                 "duration_seconds": None,
+                "artifact_sha256": None,
                 "cost_usd": None,
                 "tokens": None,
                 "attempts": 0,
@@ -180,6 +181,16 @@ def invalidate(manifest: dict[str, Any], target: str, run_dir: Path) -> list[str
         artifact_path = run_dir / stage["artifact"]
         if artifact_path.is_file():
             artifact_path.unlink()
+        # Stages whose artifact lives in a sibling directory (sfx writes
+        # manifest.json + sibling .wav files) need recursive cleanup. The
+        # convention: if the artifact is `<dir>/manifest.json`, clear all
+        # siblings in `<dir>/` except the directory itself.
+        if "/" in stage["artifact"]:
+            stage_dir = (run_dir / stage["artifact"]).parent
+            if stage_dir.is_dir():
+                for child in stage_dir.iterdir():
+                    if child.is_file():
+                        child.unlink()
         stage["status"] = "pending"
         stage["started_at"] = None
         stage["finished_at"] = None

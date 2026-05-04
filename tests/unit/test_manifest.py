@@ -80,3 +80,31 @@ def test_next_pending_walks_in_order(empty_run: Path) -> None:
     assert view is not None
     # capture has no deps so it must be first
     assert view.name == "capture"
+
+
+def test_invalidate_clears_directory_artifact_siblings(tmp_path: Path) -> None:
+    """sfx writes manifest.json + sibling .wav files. --from sfx must clear all of them."""
+    m = mf.new_manifest("r1", "url", "http://example.test/")
+    run_dir = tmp_path
+    # Simulate populated run dir for every stage.
+    for stage in m["stages"]:
+        artifact = run_dir / stage["artifact"]
+        artifact.parent.mkdir(parents=True, exist_ok=True)
+        artifact.touch()
+    # Drop a couple of sibling .wav files into the sfx directory.
+    sfx_dir = run_dir / "sfx"
+    (sfx_dir / "click-0.wav").touch()
+    (sfx_dir / "submit-0.wav").touch()
+
+    invalidated = mf.invalidate(m, "sfx", run_dir)
+    assert "sfx" in invalidated
+
+    # Every file in sfx/ — manifest.json + sibling .wav files — must be gone.
+    assert sfx_dir.is_dir()  # directory itself stays
+    assert list(sfx_dir.iterdir()) == []
+
+
+def test_artifact_sha256_field_initialized_null() -> None:
+    m = mf.new_manifest("r1", "url", "http://example.test/")
+    for stage in m["stages"]:
+        assert stage["artifact_sha256"] is None

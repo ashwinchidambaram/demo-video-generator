@@ -51,6 +51,7 @@
         "started_at": {"type": ["string", "null"], "format": "date-time"},
         "finished_at": {"type": ["string", "null"], "format": "date-time"},
         "duration_seconds": {"type": ["number", "null"]},
+        "artifact_sha256": {"type": ["string", "null"], "description": "SHA256 of the produced artifact bytes. Driver uses this for content-aware --from invalidation: if a re-run produces an identical hash, downstream cascading is skipped."},
         "cost_usd": {"type": ["number", "null"], "description": "Estimated cost of this stage (LLM tokens + API calls)."},
         "tokens": {
           "type": ["object", "null"],

@@ -73,12 +73,38 @@
       "type": "array",
       "description": "Caption layout WITH absolute timing resolved by composition-director (anchor_event_id + intent_duration → start/end/duck_window).",
       "items": {"$ref": "#/$defs/RenderedCaption"}
+    },
+    "dropped_captions": {
+      "type": "array",
+      "description": "Captions that composition-director elided (collision resolution per priority). Preserved for qa-reviewer traceability.",
+      "items": {
+        "type": "object",
+        "required": ["id", "reason"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string"},
+          "reason": {"type": "string", "enum": ["priority_collision", "duration_overflow", "anchor_density"]},
+          "details": {"type": "string"}
+        }
+      }
+    },
+    "style": {
+      "type": "object",
+      "description": "Style preset selected by composition-director. Renderer looks up the implementation by name in remotion/src/styles/.",
+      "required": ["preset"],
+      "additionalProperties": false,
+      "properties": {
+        "preset": {
+          "type": "string",
+          "enum": ["announce-clean", "explain-soft", "punchline-bold", "retro-warm", "neutral"]
+        }
+      }
     }
   },
   "$defs": {
     "RenderedCaption": {
       "type": "object",
-      "required": ["id", "text", "mood", "start", "end"],
+      "required": ["id", "text", "mood", "start", "end", "priority"],
       "additionalProperties": false,
       "properties": {
         "id": {"type": "string"},
@@ -89,6 +115,8 @@
         },
         "start": {"type": "number", "minimum": 0},
         "end": {"type": "number", "minimum": 0},
+        "priority": {"type": "integer", "minimum": 1, "maximum": 5, "description": "Carried through from captions.json; qa-reviewer uses this to reason about elision decisions."},
+        "anchor_event_id": {"type": ["string", "null"], "description": "Source anchor preserved for traceability after composition-director resolves absolute timing."},
         "duck_window": {
           "type": ["object", "null"],
           "additionalProperties": false,
