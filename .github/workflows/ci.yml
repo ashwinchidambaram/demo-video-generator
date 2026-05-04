@@ -1,0 +1,60 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.11.7"
+      - name: Setup Python
+        run: uv python install 3.12
+      - name: Sync deps
+        run: uv sync --all-extras
+      - name: Codegen schemas (Pydantic)
+        run: |
+          uv run datamodel-codegen \
+            --input schemas \
+            --input-file-type jsonschema \
+            --output src/demo_video_generator/schemas \
+            --output-model-type pydantic_v2.BaseModel \
+            --target-python-version 3.12 \
+            --use-schema-description \
+            --use-double-quotes \
+            --disable-timestamp \
+            --use-standard-collections \
+            --use-union-operator
+      - name: Lint
+        run: uv run ruff check src tests
+      - name: Typecheck
+        run: uv run mypy src
+      - name: Test
+        run: uv run pytest -q
+
+  remotion-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Remotion deps
+        working-directory: remotion
+        run: npm ci
+      - name: Codegen Zod schemas
+        working-directory: remotion
+        run: npm run gen-schemas
+      - name: Prettier check
+        working-directory: remotion
+        run: npx prettier --check 'src/**/*.{ts,tsx}'
+      - name: TypeScript check
+        working-directory: remotion
+        run: npx tsc --noEmit

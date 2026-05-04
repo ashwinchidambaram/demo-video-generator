@@ -1,0 +1,35 @@
+name: evals
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+  schedule:
+    - cron: '0 8 * * *'  # nightly at 08:00 UTC
+  workflow_dispatch:
+
+jobs:
+  eval-suite:
+    # Per D16: nightly runs ONE rotated agent's quality eval (not the fleet);
+    # PR runs only when 'eval' label is present.
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'eval'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.11.7"
+      - name: Setup Python
+        run: uv python install 3.12
+      - name: Sync deps
+        run: uv sync --all-extras
+      - name: List eval cases
+        run: uv run python evals/runner.py --list
+      - name: Run smoke evals (always cheap)
+        run: uv run python evals/runner.py --class smoke
+      - name: Run headline evals (PR with eval label or manual)
+        if: github.event_name != 'schedule'
+        run: uv run python evals/runner.py --class headline
