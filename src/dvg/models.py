@@ -12,7 +12,16 @@ from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from dvg.keyframes import Keyframe
+
 # ---- Animation primitives -------------------------------------------------
+
+
+# A track is either a constant value or a keyframe list.
+# In JSON: a constant scalar/tuple OR a list of {"t","v","e"} dicts.
+ScalarTrack = float | int | list[Keyframe]
+PairTrack = tuple[float, float] | list[Keyframe]
+TripleTrack = tuple[float, float, float] | list[Keyframe]
 
 
 class Mood(str, Enum):
@@ -51,6 +60,22 @@ class Fit(str, Enum):
 # ---- Layer base + variants ------------------------------------------------
 
 
+class Transform(BaseModel):
+    """Time-varying transform applied to a layer.
+
+    Each field is either a constant or a list of Keyframes (layer-relative time).
+    Position is in canvas pixels; scale is multiplicative on prepared layer size;
+    rotation is degrees; opacity is 0..1.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    position: tuple[float, float] | list[Keyframe] | None = None
+    scale: float | list[Keyframe] = 1.0
+    rotation: float | list[Keyframe] = 0.0
+    opacity: float | list[Keyframe] = 1.0
+
+
 class _LayerBase(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -61,6 +86,7 @@ class _LayerBase(BaseModel):
 
     fade_in: float = 0.0
     fade_out: float = 0.0
+    transform: Transform | None = None
 
     @model_validator(mode="after")
     def _check_time(self) -> Self:

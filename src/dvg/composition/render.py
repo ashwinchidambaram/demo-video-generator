@@ -24,6 +24,7 @@ from pathlib import Path
 
 from dvg.composition.audio import build_audio_stem, measure_loudness
 from dvg.composition.captions.ass import compile_ass
+from dvg.keyframes import compile_to_ffmpeg_expr
 from dvg.models import (
     Anchor,
     CaptionLayer,
@@ -107,10 +108,10 @@ def render(
         prepared, out_label = _prepare_image_layer(il, comp, ffmpeg_in)
         filter_parts.append(prepared)
         next_label = f"[v_img_{idx}]"
-        x_expr, y_expr = _anchor_to_xy(il.anchor, comp.width, comp.height, il.offset)
+        x_expr, y_expr = _resolve_position(il, comp)
         enable = f"enable='between(t,{il.time[0]:.3f},{il.time[1]:.3f})'"
         filter_parts.append(
-            f"{current_label}{out_label}overlay=x={x_expr}:y={y_expr}:{enable}{next_label}"
+            f"{current_label}{out_label}overlay=x='{x_expr}':y='{y_expr}':{enable}{next_label}"
         )
         current_label = next_label
 
@@ -262,6 +263,24 @@ def _prepare_image_layer(
             )
     chain += f"setpts=PTS-STARTPTS[i{idx}]"
     return chain, f"[i{idx}]"
+
+
+def _resolve_position(layer: ImageLayer, comp: Composition) -> tuple[str, str]:
+    """Return (x_expr, y_expr) for the overlay step.
+
+    Priority: transform.position keyframes > anchor + offset.
+    Keyframes are layer-relative time; ffmpeg expressions use comp time, so
+    we shift by layer.time[0].
+    """
+    if layer.transform and layer.transform.position is not None:
+        pos = layer.transform.position
+        if isinstance(pos, list):
+            x_expr = compile_to_ffmpeg_expr(pos, component=0, layer_start=layer.time[0])
+            y_expr = compile_to_ffmpeg_expr(pos, component=1, layer_start=layer.time[0])
+            return x_expr, y_expr
+        # constant tuple
+        return f"{pos[0]:.3f}", f"{pos[1]:.3f}"
+    return _anchor_to_xy(layer.anchor, comp.width, comp.height, layer.offset)
 
 
 def _anchor_to_xy(

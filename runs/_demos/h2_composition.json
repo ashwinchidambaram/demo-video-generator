@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "duration": 10.0,
+  "background": "#0a0a0a",
+  "theme": {
+    "font_family": "Inter",
+    "font_family_mono": "JetBrains Mono",
+    "color_text": "#ffffff",
+    "color_text_dim": "#9ca3af",
+    "color_accent": "#3b82f6",
+    "color_background": "#0a0a0a",
+    "color_caption_bg": "#000000aa"
+  },
+  "layers": [
+    {
+      "id": null,
+      "time": [
+        0.0,
+        10.0
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.0,
+      "fade_out": 0.0,
+      "transform": null,
+      "kind": "video",
+      "src": "/Users/ashwinchidambaram/dev/projects/demo-video-generator/.worktrees/inventing-new-solutions/tests/fixtures/video/fixture_12s.mp4",
+      "fit": "cover",
+      "mute": true,
+      "speed": 1.0,
+      "crop": null
+    },
+    {
+      "id": null,
+      "time": [
+        0.5,
+        3.0
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.4,
+      "fade_out": 0.4,
+      "transform": null,
+      "kind": "title",
+      "title": "Animated transforms",
+      "subtitle": "Position keyframes via ffmpeg expressions",
+      "background": "#0a0a0a",
+      "title_color": "#ffffff",
+      "subtitle_color": "#9ca3af",
+      "title_size": 88,
+      "subtitle_size": 36,
+      "align": "middle-center"
+    },
+    {
+      "id": null,
+      "time": [
+        0.0,
+        10.0
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.0,
+      "fade_out": 0.4,
+      "transform": {
+        "position": [
+          {
+            "t": 0.0,
+            "v": [
+              2000.0,
+              80.0
+            ],
+            "e": "linear"
+          },
+          {
+            "t": 1.0,
+            "v": [
+              1500.0,
+              80.0
+            ],
+            "e": "ease_out"
+          }
+        ],
+        "scale": 1.0,
+        "rotation": 0.0,
+        "opacity": 1.0
+      },
+      "kind": "image",
+      "src": "/Users/ashwinchidambaram/dev/projects/demo-video-generator/.worktrees/inventing-new-solutions/tests/fixtures/logo.png",
+      "anchor": "top-left",
+      "scale": 1.0,
+      "offset": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": null,
+      "time": [
+        3.5,
+        6.0
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.0,
+      "fade_out": 0.0,
+      "transform": null,
+      "kind": "caption",
+      "text": "Each layer can declare keyframed transforms",
+      "mood": "explain",
+      "anchor": "bottom-center",
+      "margin": 80,
+      "max_width_pct": 0.7,
+      "font": null,
+      "font_size": null,
+      "color": null,
+      "outline": null,
+      "shadow": null,
+      "anchor_event_id": null,
+      "intent_duration": null,
+      "priority": 0
+    },
+    {
+      "id": null,
+      "time": [
+        6.5,
+        9.0
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.0,
+      "fade_out": 0.0,
+      "transform": null,
+      "kind": "caption",
+      "text": "Compiled to ffmpeg expressions — no Chromium",
+      "mood": "punchline",
+      "anchor": "bottom-center",
+      "margin": 80,
+      "max_width_pct": 0.7,
+      "font": null,
+      "font_size": null,
+      "color": null,
+      "outline": null,
+      "shadow": null,
+      "anchor_event_id": null,
+      "intent_duration": null,
+      "priority": 0
+    },
+    {
+      "id": null,
+      "time": [
+        9.2,
+        10.0
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.0,
+      "fade_out": 0.0,
+      "transform": null,
+      "kind": "caption",
+      "text": "dvg",
+      "mood": "call_to_action",
+      "anchor": "bottom-center",
+      "margin": 80,
+      "max_width_pct": 0.7,
+      "font": null,
+      "font_size": 72,
+      "color": null,
+      "outline": null,
+      "shadow": null,
+      "anchor_event_id": null,
+      "intent_duration": null,
+      "priority": 0
+    }
+  ],
+  "audio": [
+    {
+      "id": null,
+      "src": "/Users/ashwinchidambaram/dev/projects/wipro/demo/soundtracks/vibe-flow.mp3",
+      "time": [
+        0.0,
+        10.0
+      ],
+      "role": "music",
+      "target_lufs": -22.0,
+      "volume": 1.0,
+      "fade_in": 0.4,
+      "fade_out": 0.6,
+      "duck_under_captions": true,
+      "duck_db": -9.0
+    }
+  ],
+  "final_loudness": -14.0,
+  "peak_dbfs": -1.0,
+  "title": null,
+  "description": null
+}
