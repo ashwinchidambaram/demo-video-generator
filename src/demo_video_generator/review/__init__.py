@@ -131,6 +131,204 @@ def _ebur128(final_mp4: Path) -> dict[str, Any]:
     }
 
 
+def _aubio_tempo(audio_path: Path) -> dict[str, Any]:
+    """Run `aubio tempo` and return canonical scalar BPM (rounded to int).
+
+    aubio writes BPM estimates per-frame to stdout; we take the median.
+    Returns {"available": False} if aubio isn't installed or the clip is too
+    short (aubio is unstable on <8s clips per qa-reviewer/gotchas.md).
+    """
+    if shutil.which("aubio") is None:
+        return {"available": False}
+    try:
+        proc = subprocess.run(
+            ["aubio", "tempo", "-i", str(audio_path)],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=60,
+        )
+    except subprocess.TimeoutExpired:
+        return {"available": False, "error": "timeout"}
+    if proc.returncode != 0:
+        return {"available": False, "error": proc.stderr.strip()[:200]}
+
+    bpms: list[float] = []
+    for line in proc.stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        # `aubio tempo` prints "<seconds> <bpm>" or sometimes just "<bpm>"
+        parts = line.split()
+        try:
+            bpm = float(parts[-1])
+            if 30 < bpm < 240:
+                bpms.append(bpm)
+        except ValueError:
+            continue
+    if not bpms:
+        return {"available": True, "bpm": None}
+    median_bpm = sorted(bpms)[len(bpms) // 2]
+    return {"available": True, "bpm": round(median_bpm)}
+
+
+def _aubio_onset_count(audio_path: Path) -> dict[str, Any]:
+    """Run `aubio onset` and return the count of detected onsets.
+
+    Onset density is a useful signal for "busy vs sparse" sections.
+    """
+    if shutil.which("aubio") is None:
+        return {"available": False}
+    try:
+        proc = subprocess.run(
+            ["aubio", "onset", "-i", str(audio_path)],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=60,
+        )
+    except subprocess.TimeoutExpired:
+        return {"available": False, "error": "timeout"}
+    if proc.returncode != 0:
+        return {"available": False}
+    count = 0
+    for line in proc.stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            float(line.split()[0])
+            count += 1
+        except (ValueError, IndexError):
+            continue
+    return {"available": True, "onset_count": count}
+
+
+def _librosa_segments(
+    audio_path: Path, *, segment_count: int = 6
+) -> dict[str, Any]:
+    """Use librosa.segment to compute boundary timestamps where character
+    changes (per agent design / audio-qa-toolkit catalog). Returns canonical
+    boundary timestamps quantized to 100 ms (per ultraplan R3 to avoid
+    cross-platform numpy/scipy boundary jitter).
+
+    Phase 8: agglomerative segmentation on MFCC features. Returns up to
+    `segment_count` boundaries.
+    """
+    try:
+        import librosa
+    except ImportError:
+        return {"available": False, "error": "librosa not installed"}
+    try:
+        # Load audio (mono, native SR). Limit to first 60s to bound cost.
+        y, sr = librosa.load(str(audio_path), sr=None, mono=True, duration=60)
+    except Exception as e:
+        return {"available": False, "error": str(e)[:200]}
+    if len(y) == 0:
+        return {"available": False, "error": "empty audio"}
+
+    try:
+        mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
+        # agglomerative clustering on MFCC frames
+        boundary_frames = librosa.segment.agglomerative(mfcc, segment_count)
+        # Convert frame indices to seconds quantized to 100 ms
+        times = librosa.frames_to_time(boundary_frames, sr=sr)
+        boundaries_100ms = sorted({round(float(t) * 10) / 10 for t in times})
+        return {
+            "available": True,
+            "boundaries_seconds": boundaries_100ms,
+            "segment_count_actual": len(boundaries_100ms),
+            "duration_loaded": float(len(y) / sr),
+        }
+    except Exception as e:
+        return {"available": False, "error": str(e)[:200]}
+
+
+def _sox_spectrogram(audio_path: Path, out_path: Path) -> dict[str, Any]:
+    """Generate a 1920x1080 spectrogram PNG via sox.
+
+    Returns the path on success. Phase 8: spectrogram is evidence; perceptual
+    hash for snapshot tests lands when Phase 8.5 vendors a stable sox/libpng
+    pin (per ultraplan R3).
+    """
+    if shutil.which("sox") is None:
+        return {"available": False}
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    # sox needs WAV; if the input is MP3 we transcode via ffmpeg first.
+    src: Path = audio_path
+    tmp_wav: Path | None = None
+    if audio_path.suffix.lower() != ".wav" and shutil.which("ffmpeg") is not None:
+        tmp_wav = audio_path.with_suffix(".tmp_qa.wav")
+        try:
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-loglevel", "error",
+                    "-i", str(audio_path),
+                    str(tmp_wav),
+                ],
+                capture_output=True,
+                check=True,
+                timeout=60,
+            )
+            src = tmp_wav
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            tmp_wav = None
+    try:
+        subprocess.run(
+            [
+                "sox", str(src), "-n", "spectrogram",
+                "-o", str(out_path),
+                "-x", "1920", "-y", "1080",
+                "-z", "90",
+            ],
+            capture_output=True,
+            check=True,
+            timeout=120,
+        )
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+        return {"available": False, "error": str(e)[:200]}
+    finally:
+        if tmp_wav is not None and tmp_wav.exists():
+            with contextlib.suppress(OSError):
+                tmp_wav.unlink()
+    if not out_path.is_file():
+        return {"available": False, "error": "sox produced no output"}
+    return {
+        "available": True,
+        "path": str(out_path),
+        "size_bytes": out_path.stat().st_size,
+    }
+
+
+def _extract_audio_from_video(video_path: Path, out_path: Path) -> bool:
+    """Helper: extract the audio track from a video to a temporary WAV so
+    aubio/librosa can analyze it (those tools want audio, not video)."""
+    if shutil.which("ffmpeg") is None:
+        return False
+    try:
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-loglevel", "error",
+                "-i", str(video_path),
+                "-vn",
+                "-acodec", "pcm_s16le",
+                "-ar", "44100",
+                "-ac", "2",
+                str(out_path),
+            ],
+            capture_output=True,
+            check=True,
+            timeout=120,
+        )
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return False
+    return out_path.is_file()
+
+
 def _classify_lufs_severity(actual: float, target: float) -> str | None:
     """Per severity ladder: high if off >2; medium 1-2; low <1."""
     delta = abs(actual - target)
@@ -231,6 +429,23 @@ def review(final_mp4: Path, run_dir: Path) -> dict[str, Any]:
     # 3. ebur128 loudness + true peak.
     loudness = _ebur128(final_mp4)
     measurements["ebur128"] = loudness
+
+    # 4. Extract audio for aubio/librosa toolkit.
+    audio_wav = run_dir / ".qa-audio.wav"
+    audio_extracted = _extract_audio_from_video(final_mp4, audio_wav)
+    if audio_extracted:
+        measurements["aubio_tempo"] = _aubio_tempo(audio_wav)
+        measurements["aubio_onset"] = _aubio_onset_count(audio_wav)
+        measurements["librosa_segments"] = _librosa_segments(audio_wav)
+        # 5. Spectrogram as evidence.
+        spec_path = run_dir / "spectrogram.png"
+        spec_result = _sox_spectrogram(audio_wav, spec_path)
+        measurements["sox_spectrogram"] = spec_result
+        if spec_result.get("available"):
+            evidence_paths.append(str(spec_path))
+        # Cleanup tmp wav
+        with contextlib.suppress(OSError):
+            audio_wav.unlink()
 
     if loudness.get("available"):
         integrated = loudness.get("integrated_lufs")

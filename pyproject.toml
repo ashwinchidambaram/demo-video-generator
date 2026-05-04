@@ -11,6 +11,12 @@ dependencies = [
     "pydantic>=2.7",
     "rich>=13.7",
     "jsonschema>=4.21",
+    # Phase 2-8 deps:
+    "librosa>=0.10",        # audio QA segmentation (Phase 8)
+    "soundfile>=0.12",      # backend for librosa
+    "scenedetect>=0.6",     # visual-analyst (Phase 3)
+    "playwright>=1.45",     # footage-capture URL path (Phase 2.5; runtime gated on TCC)
+    "requests>=2.31",       # knowledge-curator WebFetch (Phase 10)
 ]
 
 [project.optional-dependencies]
