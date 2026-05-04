@@ -307,27 +307,40 @@ def _write_events(
         )
 
     for tl in titles:
-        # Combine title + optional subtitle as one multi-line dialogue so the
-        # block centers around the canvas middle on \an5.
+        # Use absolute positioning (\pos) for pixel-precise centering. Without
+        # this, libass anchors multi-line text by the bounding-box-center which
+        # depends on the relative line heights and visually drifts off-center
+        # when the title and subtitle have very different sizes.
         start = _hh_mm_ss(tl.time[0])
         end = _hh_mm_ss(tl.time[1])
         title_style = _title_style_name(tl, "title")
         fi_ms = int(tl.fade_in * 1000) or 400
         fo_ms = int(tl.fade_out * 1000) or 400
+
+        # Compute the visual center: account for subtitle so the COMBINED block
+        # centers vertically. The title baseline sits half the title height
+        # above the line center; the subtitle line is below.
+        x_center = comp.width // 2
+        y_center = comp.height // 2
+        if tl.subtitle and tl.align == Anchor.MIDDLE_CENTER:
+            # Shift the anchor up by half the subtitle's visual contribution
+            # so the visual mass lands at canvas center.
+            y_anchor = y_center - int(tl.subtitle_size * 0.6)
+        else:
+            y_anchor = y_center
+
         title_text = _escape_ass_text(tl.title)
+        pos = f"\\pos({x_center},{y_anchor})\\an5"
         if tl.subtitle:
-            # Use a per-line style override for the subtitle line: smaller, dimmer,
-            # italic. Inline overrides via {\fnNAME\fsSIZE\1cCOLOR} apply to the rest
-            # of the dialogue until the next override block.
             sub_size = tl.subtitle_size
             sub_color = _hex_to_ass_color(tl.subtitle_color)
             sub_text = _escape_ass_text(tl.subtitle)
             text = (
-                f"{{\\fad({fi_ms},{fo_ms})}}{title_text}"
+                f"{{{pos}\\fad({fi_ms},{fo_ms})}}{title_text}"
                 f"\\N{{\\fs{sub_size}\\1c{sub_color}\\i1}}{sub_text}"
             )
         else:
-            text = f"{{\\fad({fi_ms},{fo_ms})}}{title_text}"
+            text = f"{{{pos}\\fad({fi_ms},{fo_ms})}}{title_text}"
         buf.write(
             f"Dialogue: {tl.z + 1},{start},{end},{title_style},,0,0,0,,{text}\n"
         )
