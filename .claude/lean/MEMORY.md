@@ -67,10 +67,23 @@ Ashwin: "Whatever you build has to be better than remotion and be able to do eve
 - Old structure (src/demo_video_generator, remotion/, schemas/) deleted; replaced with src/dvg/
 - pyproject points at `src/dvg`; package name = `dvg`; deps: typer, pydantic, rich, Pillow, imagehash, playwright, anyio
 - ✅ H1 DONE 02:00 (16 min): models, easing, captions/ass.py, audio.py, render.py
-  - Smoke test passes: video + 4 captions + title + soundtrack with ducking → 12s 1080p MP4 in 3.27s
-  - Output: -15 LUFS (target -14, close), -2.6 dBFS peak (under -1 ceiling), 8.5 Mbps H.264, 195kbps AAC
-  - Demo at `runs/demo_h1/final.mp4` (13MB)
-- Pyright editor warnings (import resolution) are spurious — runtime works. Will fix in H7 polish.
+  - Smoke: video + 4 captions + title + soundtrack with ducking → 12s 1080p MP4 in 3.27s
+  - -15 LUFS, -2.6 dBFS peak, 8.5 Mbps H.264, 195kbps AAC. Demo: `runs/_demos/h1/final.mp4`
+- ✅ H2 DONE 02:30 (30 min): keyframes, animated transforms, CLI
+  - Keyframe interpolation (linear/cubic/spring/bezier easing) → ffmpeg overlay x/y expressions
+  - Transform model on each layer (position/scale/rotation/opacity); only position wired to renderer
+  - CLI: `dvg render | plan | validate | schema | doctor | version`
+  - Animated demo: logo slides offscreen-right→top-right with ease_out; 10s render in 2.92s
+  - Demo at runs/_demos/h2_animated.mp4
+  - 9 unit tests pass (keyframes + smoke render)
+- Pyright editor warnings spurious — runtime works. Will resolve in H7 polish.
+
+## Deferred to H7 (polish)
+- Sequence (nested composition) — sketched in architecture, defer to polish hour
+- HTMLLayer via Playwright — needs frame-by-frame rendering loop
+- ShapeLayer (drawbox or Skia)
+- Scale/opacity over time (zoompan + chained fade workaround)
+- Hot-reload preview server
 
 ## Risks I'm carrying
 - Caption typography: ffmpeg drawtext is ugly. libass is better but learning curve. HTML→PNG via Playwright works but adds a moving part. Decision in H1.

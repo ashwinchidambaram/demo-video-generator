@@ -12,6 +12,8 @@ from rich.console import Console
 from rich.table import Table
 
 from dvg import __version__
+from dvg.analysis import analyze_events
+from dvg.capture import capture_url_sync
 from dvg.composition.render import plan as plan_composition
 from dvg.composition.render import render as render_composition
 from dvg.models import Composition
@@ -104,6 +106,81 @@ def schema(
     schema_dict = Composition.model_json_schema()
     out.write_text(json.dumps(schema_dict, indent=2))
     console.print(f"[green]✓[/green] schema → {out}")
+
+
+@app.command()
+def capture(
+    url: Annotated[str, typer.Argument(help="URL to capture (file:// or http(s)://)")],
+    out_dir: Annotated[
+        Path, typer.Option("--out-dir", "-o", help="Run directory")
+    ] = Path("runs/capture"),
+    duration: Annotated[float, typer.Option("--duration", "-d", help="seconds")] = 12.0,
+    width: Annotated[int, typer.Option("--width", help="canvas width")] = 1920,
+    height: Annotated[int, typer.Option("--height", help="canvas height")] = 1080,
+    fps: Annotated[int, typer.Option("--fps", help="output fps")] = 30,
+    scenario: Annotated[
+        str, typer.Option("--scenario", help="tour | idle | path/to/scenario.py")
+    ] = "tour",
+    headless: Annotated[
+        bool, typer.Option("--headless", help="run headless instead of headed")
+    ] = False,
+) -> None:
+    """Capture a URL → footage.mp4 + footage.events.json."""
+    console.print(f"[dim]Capturing[/dim] {url} → {out_dir}")
+    result = capture_url_sync(
+        url,
+        out_dir=out_dir,
+        duration=duration,
+        width=width,
+        height=height,
+        fps=fps,
+        scenario=scenario,
+        headed=not headless,
+    )
+    table = Table(title="Capture result")
+    table.add_column("metric", style="cyan")
+    table.add_column("value", style="white")
+    table.add_row("video", str(result.video_path))
+    table.add_row("events", str(result.events_path))
+    table.add_row("events count", str(result.events_count))
+    table.add_row("size", f"{result.video_path.stat().st_size / 1024:.0f} KB")
+    table.add_row("real time", f"{result.duration_s:.2f}s")
+    console.print(table)
+
+
+@app.command()
+def analyze(
+    run_dir: Annotated[
+        Path, typer.Argument(help="Run dir containing footage.events.json")
+    ],
+    duration: Annotated[
+        float, typer.Option("--duration", help="footage duration in seconds")
+    ] = 12.0,
+) -> None:
+    """Analyze events.json → analysis.json (scenes + anchors)."""
+    events_path = run_dir / "footage.events.json"
+    if not events_path.exists():
+        console.print(f"[red]✗[/red] {events_path} missing")
+        raise typer.Exit(1)
+    events = json.loads(events_path.read_text())
+    analysis = analyze_events(events, duration=duration)
+    out = run_dir / "analysis.json"
+    out.write_text(analysis.model_dump_json(indent=2))
+    table = Table(title=f"Analysis — {run_dir.name}")
+    table.add_column("metric", style="cyan")
+    table.add_column("value", style="white")
+    table.add_row("duration", f"{analysis.duration_s:.2f}s")
+    table.add_row("scenes", str(len(analysis.scenes)))
+    table.add_row("anchors", str(len(analysis.anchors)))
+    table.add_row("source", analysis.source)
+    console.print(table)
+    console.print()
+    for s in analysis.scenes:
+        console.print(
+            f"  scene [dim]{s.id}[/dim] "
+            f"[cyan]{s.time[0]:.2f}s → {s.time[1]:.2f}s[/cyan] "
+            f"energy={s.energy:.2f} anchors={len(s.anchors)}"
+        )
 
 
 @app.command()
