@@ -1,0 +1,131 @@
+{
+  "schema_version": 2,
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "duration": 10.0,
+  "background": "#0a0a0a",
+  "theme": {
+    "font_family": "Inter",
+    "font_family_mono": "JetBrains Mono",
+    "color_text": "#ffffff",
+    "color_text_dim": "#9ca3af",
+    "color_accent": "#3b82f6",
+    "color_background": "#0a0a0a",
+    "color_caption_bg": "#000000aa"
+  },
+  "layers": [
+    {
+      "id": null,
+      "time": [
+        0.0,
+        10.0
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.0,
+      "fade_out": 0.0,
+      "transform": null,
+      "kind": "video",
+      "src": "runs/run_20260504_023324/footage.mp4",
+      "fit": "cover",
+      "mute": true,
+      "speed": 1.0,
+      "crop": null
+    },
+    {
+      "id": null,
+      "time": [
+        0.2,
+        2.5
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.5,
+      "fade_out": 0.5,
+      "transform": null,
+      "kind": "title",
+      "title": "dvg",
+      "subtitle": "lean demo-video generator",
+      "background": "#0a0a0a",
+      "title_color": "#ffffff",
+      "subtitle_color": "#9ca3af",
+      "title_size": 110,
+      "subtitle_size": 42,
+      "align": "middle-center"
+    },
+    {
+      "id": null,
+      "time": [
+        3.76294999999553,
+        6.162949999995529
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.0,
+      "fade_out": 0.0,
+      "transform": null,
+      "kind": "caption",
+      "text": "The pitch",
+      "mood": "announce",
+      "anchor": "bottom-center",
+      "margin": 80,
+      "max_width_pct": 0.7,
+      "font": null,
+      "font_size": null,
+      "color": null,
+      "outline": null,
+      "shadow": null,
+      "anchor_event_id": null,
+      "intent_duration": 2.3999999999999995,
+      "priority": 0
+    },
+    {
+      "id": null,
+      "time": [
+        7.3129499999955305,
+        9.71294999999553
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.0,
+      "fade_out": 0.0,
+      "transform": null,
+      "kind": "caption",
+      "text": "Why it works",
+      "mood": "explain",
+      "anchor": "bottom-center",
+      "margin": 80,
+      "max_width_pct": 0.7,
+      "font": null,
+      "font_size": null,
+      "color": null,
+      "outline": null,
+      "shadow": null,
+      "anchor_event_id": null,
+      "intent_duration": 2.3999999999999995,
+      "priority": 0
+    }
+  ],
+  "audio": [
+    {
+      "id": null,
+      "src": "/Users/ashwinchidambaram/dev/projects/wipro/demo/soundtracks/vibe-edm.mp3",
+      "time": [
+        0.0,
+        10.0
+      ],
+      "role": "music",
+      "target_lufs": -22.0,
+      "volume": 1.0,
+      "fade_in": 0.4,
+      "fade_out": 0.7,
+      "duck_under_captions": true,
+      "duck_db": -9.0
+    }
+  ],
+  "final_loudness": -14.0,
+  "peak_dbfs": -1.0,
+  "title": "dvg",
+  "description": "lean demo-video generator"
+}

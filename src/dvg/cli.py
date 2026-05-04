@@ -16,6 +16,7 @@ from dvg.analysis import analyze_events
 from dvg.capture import capture_url_sync
 from dvg.composition.render import plan as plan_composition
 from dvg.composition.render import render as render_composition
+from dvg.director import DirectorContext, plan_composition as director_plan
 from dvg.models import Composition
 
 app = typer.Typer(
@@ -181,6 +182,154 @@ def analyze(
             f"[cyan]{s.time[0]:.2f}s → {s.time[1]:.2f}s[/cyan] "
             f"energy={s.energy:.2f} anchors={len(s.anchors)}"
         )
+
+
+@app.command()
+def direct(
+    run_dir: Annotated[Path, typer.Argument(help="Run dir with footage + analysis")],
+    url: Annotated[
+        str | None, typer.Option("--url", help="Source URL (for title + CTA)")
+    ] = None,
+    title: Annotated[str | None, typer.Option("--title", help="Override title")] = None,
+    tagline: Annotated[str | None, typer.Option("--tagline", help="Subtitle")] = None,
+    brand_color: Annotated[
+        str | None, typer.Option("--brand-color", help="Accent #RRGGBB")
+    ] = None,
+) -> None:
+    """Heuristic director: footage + analysis → composition.json."""
+    video = run_dir / "footage.mp4"
+    analysis_path = run_dir / "analysis.json"
+    if not video.exists() or not analysis_path.exists():
+        console.print(f"[red]✗[/red] {run_dir} missing footage or analysis")
+        raise typer.Exit(1)
+
+    from dvg.analysis.events import Analysis as AnalysisModel
+
+    analysis = AnalysisModel.model_validate_json(analysis_path.read_text())
+    # probe video dims + duration
+    import json as _json
+
+    proc = subprocess.run(
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "stream=width,height,codec_type:format=duration",
+            "-of",
+            "json",
+            str(video),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    info = _json.loads(proc.stdout)
+    v_stream = next(s for s in info["streams"] if s["codec_type"] == "video")
+    width = int(v_stream["width"])
+    height = int(v_stream["height"])
+    duration = float(info["format"]["duration"])
+
+    ctx = DirectorContext(
+        video_path=video,
+        duration_s=duration,
+        width=width,
+        height=height,
+        analysis=analysis,
+        source_url=url,
+        title=title,
+        tagline=tagline,
+        brand_color=brand_color,
+    )
+    comp = director_plan(ctx)
+    out = run_dir / "composition.json"
+    comp.save(out)
+    table = Table(title=f"Director — {run_dir.name}")
+    table.add_column("key", style="cyan")
+    table.add_column("value", style="white")
+    table.add_row("composition", str(out))
+    table.add_row("duration", f"{comp.duration:.2f}s")
+    table.add_row("layers", str(len(comp.layers)))
+    table.add_row("captions", str(sum(1 for l in comp.layers if l.kind == "caption")))
+    table.add_row("audio", comp.audio[0].src.name if comp.audio else "—")
+    console.print(table)
+
+
+@app.command()
+def make_video(
+    url: Annotated[str, typer.Argument(help="URL or file:// to demo")],
+    out: Annotated[Path, typer.Option("--out", "-o")] = Path("final.mp4"),
+    duration: Annotated[float, typer.Option("--duration", "-d")] = 12.0,
+    width: Annotated[int, typer.Option("--width")] = 1920,
+    height: Annotated[int, typer.Option("--height")] = 1080,
+    scenario: Annotated[str, typer.Option("--scenario")] = "tour",
+    headless: Annotated[bool, typer.Option("--headless")] = False,
+    title: Annotated[str | None, typer.Option("--title")] = None,
+    tagline: Annotated[str | None, typer.Option("--tagline")] = None,
+    brand_color: Annotated[str | None, typer.Option("--brand-color")] = None,
+    keep_run: Annotated[bool, typer.Option("--keep-run")] = True,
+) -> None:
+    """End-to-end: capture → analyze → direct → render → MP4."""
+    import time as _time
+    from datetime import datetime
+
+    run_dir = Path("runs") / f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    console.print(f"[bold]dvg make-video[/bold] {url} → {out}  ([dim]{run_dir}[/dim])")
+
+    t0 = _time.perf_counter()
+    cap = capture_url_sync(
+        url,
+        out_dir=run_dir,
+        duration=duration,
+        width=width,
+        height=height,
+        scenario=scenario,
+        headed=not headless,
+    )
+    console.print(
+        f"  [green]✓[/green] capture: {cap.events_count} events, "
+        f"{cap.video_path.stat().st_size / 1024:.0f}KB"
+    )
+
+    events = json.loads(cap.events_path.read_text())
+    analysis = analyze_events(events, duration=duration)
+    (run_dir / "analysis.json").write_text(analysis.model_dump_json(indent=2))
+    console.print(
+        f"  [green]✓[/green] analyze: {len(analysis.scenes)} scenes, "
+        f"{len(analysis.anchors)} anchors"
+    )
+
+    ctx = DirectorContext(
+        video_path=cap.video_path,
+        duration_s=duration,
+        width=width,
+        height=height,
+        analysis=analysis,
+        source_url=url,
+        title=title,
+        tagline=tagline,
+        brand_color=brand_color,
+    )
+    comp = director_plan(ctx)
+    comp.save(run_dir / "composition.json")
+    n_caps = sum(1 for l in comp.layers if l.kind == "caption")
+    console.print(
+        f"  [green]✓[/green] direct: {n_caps} captions, "
+        f"music={comp.audio[0].src.name}"
+    )
+
+    result = render_composition(comp, out, keep_intermediates=False)
+    elapsed = _time.perf_counter() - t0
+    console.print(
+        f"  [green]✓[/green] render: {result.duration_s:.1f}s, "
+        f"LUFS={result.audio_lufs}, peak={result.audio_peak_dbfs}"
+    )
+    console.print()
+    console.print(
+        f"[bold green]Done[/bold green] in {elapsed:.1f}s → {out} "
+        f"({out.stat().st_size / 1024:.0f}KB)"
+    )
 
 
 @app.command()
