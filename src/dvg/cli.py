@@ -560,6 +560,88 @@ def review_cmd(
 
 
 @app.command()
+def frame(
+    composition_path: Annotated[Path, typer.Argument(help="composition.json path")],
+    t: Annotated[float, typer.Option("--t", help="time in seconds")] = 1.0,
+    out: Annotated[Path, typer.Option("--out", "-o")] = Path("frame.png"),
+) -> None:
+    """Render a single frame from a composition (for visual debugging)."""
+    import tempfile
+
+    comp = Composition.load(composition_path)
+    # Render only the first 0.5 s window around t to keep ffmpeg fast.
+    # Strategy: render the full composition to a temp MP4 and extract frame.
+    with tempfile.TemporaryDirectory() as td:
+        tmp_mp4 = Path(td) / "tmp.mp4"
+        result = render_composition(comp, tmp_mp4, preset="ultrafast", crf=28)
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-ss",
+            f"{t:.3f}",
+            "-i",
+            str(result.out),
+            "-frames:v",
+            "1",
+            "-q:v",
+            "2",
+            str(out),
+        ]
+        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        if proc.returncode != 0:
+            console.print(f"[red]✗[/red] frame extract failed: {proc.stderr}")
+            raise typer.Exit(1)
+    console.print(f"[green]✓[/green] frame at t={t}s → {out}")
+
+
+@app.command()
+def contact_sheet(
+    composition_path: Annotated[Path, typer.Argument()],
+    out: Annotated[Path, typer.Option("--out", "-o")] = Path("contact_sheet.png"),
+    cols: Annotated[int, typer.Option("--cols")] = 4,
+    rows: Annotated[int, typer.Option("--rows")] = 3,
+) -> None:
+    """Generate an N×M grid of frames sampled across the composition."""
+    import tempfile
+
+    comp = Composition.load(composition_path)
+    n = cols * rows
+    with tempfile.TemporaryDirectory() as td:
+        tmp_mp4 = Path(td) / "tmp.mp4"
+        render_composition(comp, tmp_mp4, preset="ultrafast", crf=28)
+        # Sample n frames evenly. ffmpeg select filter + tile.
+        # interval = n+1 evenly spaces between 0 and duration
+        tile_w = comp.width // cols
+        tile_h = comp.height // rows
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-i",
+            str(tmp_mp4),
+            "-vf",
+            (
+                f"select='not(mod(n\\,{int(comp.duration * comp.fps / n)}))',"
+                f"scale={tile_w}:{tile_h},"
+                f"tile={cols}x{rows}:padding=4:color=#1a1a1a"
+            ),
+            "-frames:v",
+            "1",
+            str(out),
+        ]
+        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        if proc.returncode != 0:
+            console.print(f"[red]✗[/red] contact sheet failed: {proc.stderr[-1000:]}")
+            raise typer.Exit(1)
+    console.print(f"[green]✓[/green] {cols}×{rows} contact sheet → {out}")
+
+
+@app.command()
 def telemetry(
     path: Annotated[
         Path, typer.Option("--path", help="Telemetry file")
