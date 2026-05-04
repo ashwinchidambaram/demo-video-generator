@@ -325,11 +325,113 @@ def make_video(
         f"  [green]✓[/green] render: {result.duration_s:.1f}s, "
         f"LUFS={result.audio_lufs}, peak={result.audio_peak_dbfs}"
     )
+
+    # Telemetry
+    from dvg.review.telemetry import append_row, build_row
+
+    row = build_row(
+        run_id=run_dir.name,
+        input=url,
+        composition=comp,
+        output_path=out,
+        render_time_s=result.duration_s,
+        output_lufs=result.audio_lufs,
+        output_peak_dbfs=result.audio_peak_dbfs,
+    )
+    append_row(row)
+
     console.print()
     console.print(
         f"[bold green]Done[/bold green] in {elapsed:.1f}s → {out} "
         f"({out.stat().st_size / 1024:.0f}KB)"
     )
+
+
+@app.command(name="review")
+def review_cmd(
+    path: Annotated[Path, typer.Argument(help="Path to MP4")],
+    target_lufs: Annotated[float, typer.Option("--target-lufs")] = -14.0,
+    json_out: Annotated[
+        Path | None, typer.Option("--json-out", help="Write QA report JSON")
+    ] = None,
+) -> None:
+    """Run audio + visual QA on an MP4."""
+    from dvg.review import review
+
+    report = review(path, target_lufs=target_lufs)
+    if json_out:
+        json_out.write_text(report.model_dump_json(indent=2))
+
+    table = Table(title=f"QA — {path.name}")
+    table.add_column("metric", style="cyan")
+    table.add_column("value", style="white")
+    table.add_row("duration", f"{report.duration_s:.2f}s" if report.duration_s else "?")
+    table.add_row("dimensions", f"{report.width}×{report.height}")
+    table.add_row("fps", f"{report.fps:.2f}" if report.fps else "?")
+    table.add_row("video codec", report.video_codec or "?")
+    table.add_row("audio codec", report.audio_codec or "?")
+    table.add_row(
+        "integrated LUFS",
+        f"{report.integrated_lufs:.1f}" if report.integrated_lufs is not None else "?",
+    )
+    table.add_row(
+        "true peak",
+        f"{report.true_peak_dbfs:.1f} dBFS" if report.true_peak_dbfs is not None else "?",
+    )
+    table.add_row("LRA", f"{report.lra:.1f}" if report.lra else "?")
+    table.add_row("BPM", f"{report.bpm:.0f}" if report.bpm else "?")
+    table.add_row("dead air", f"{report.dead_air_total_s:.1f}s in {report.dead_air_count} segs")
+    console.print(table)
+    console.print()
+
+    if report.findings:
+        finding_table = Table(title="Findings")
+        finding_table.add_column("sev", style="bold")
+        finding_table.add_column("code", style="cyan")
+        finding_table.add_column("message")
+        finding_table.add_column("action", style="dim")
+        for f in report.findings:
+            color = {"high": "red", "medium": "yellow", "low": "blue"}[f.severity.value]
+            finding_table.add_row(
+                f"[{color}]{f.severity.value}[/{color}]",
+                f.code,
+                f.message,
+                f.proposed_action or "",
+            )
+        console.print(finding_table)
+    else:
+        console.print("[green]✓[/green] no findings")
+
+    console.print()
+    if report.pass_:
+        console.print("[bold green]PASS[/bold green]")
+    else:
+        console.print(f"[bold red]FAIL[/bold red] ({report.severity_high_count} high-severity)")
+        raise typer.Exit(1)
+
+
+@app.command()
+def telemetry(
+    path: Annotated[
+        Path, typer.Option("--path", help="Telemetry file")
+    ] = Path("runs/_telemetry.jsonl"),
+) -> None:
+    """Show summary of dvg make-video runs."""
+    from dvg.review.telemetry import summary
+
+    s = summary(path)
+    table = Table(title="Telemetry summary")
+    table.add_column("key", style="cyan")
+    table.add_column("value", style="white")
+    for k, v in s.items():
+        if "ts" in k and isinstance(v, (int, float)):
+            from datetime import datetime
+            table.add_row(k, datetime.fromtimestamp(v).isoformat(timespec="seconds"))
+        elif isinstance(v, float):
+            table.add_row(k, f"{v:.2f}")
+        else:
+            table.add_row(k, str(v))
+    console.print(table)
 
 
 @app.command()
