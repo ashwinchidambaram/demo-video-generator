@@ -70,7 +70,7 @@ def _detect_scenes_in_range(
             duration=video.duration if end_seconds <= 0 else None,
             show_progress=False,
         )
-    except Exception:  # noqa: BLE001
+    except Exception:
         return []
 
     raw_scenes = scene_manager.get_scene_list()
@@ -102,20 +102,20 @@ def _cap_keyframes(
         idx = min(range(len(out)), key=lambda i: out[i][1] - out[i][0])
         if idx == 0:
             merged = (out[0][0], out[1][1])
-            out = [merged] + out[2:]
+            out = [merged, *out[2:]]
         elif idx == len(out) - 1:
             merged = (out[-2][0], out[-1][1])
-            out = out[:-2] + [merged]
+            out = [*out[:-2], merged]
         else:
             left = out[idx - 1]
             right = out[idx + 1]
             # merge with shorter neighbour
             if (left[1] - left[0]) <= (right[1] - right[0]):
                 merged = (left[0], out[idx][1])
-                out = out[: idx - 1] + [merged] + out[idx + 1 :]
+                out = [*out[: idx - 1], merged, *out[idx + 1 :]]
             else:
                 merged = (out[idx][0], right[1])
-                out = out[:idx] + [merged] + out[idx + 2 :]
+                out = [*out[:idx], merged, *out[idx + 2 :]]
     return out
 
 

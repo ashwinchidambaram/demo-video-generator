@@ -17,7 +17,6 @@ from demo_video_generator.analysis.visual import (
     detect_visual_scenes,
 )
 
-
 # ---------- _cap_keyframes (pure logic) ----------
 
 
