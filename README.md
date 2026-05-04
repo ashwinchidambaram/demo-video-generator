@@ -249,6 +249,16 @@ Or render an existing one:
 dvg render composition.json -o final.mp4
 ```
 
+### Scaffold a new composition
+
+```bash
+dvg new my_demo.json --duration 15
+# or as runnable Python
+dvg new my_demo.py --duration 15 --style py
+```
+
+Both forms emit a starter file with title intro, video, captions, and end-card placeholders. Edit the `src` paths and run.
+
 ## Comparison with the original plan
 
 This branch (`inventing-new-solutions`) replaces the project's `main` plan v2.2 — which proposed Remotion + a 9-agent fleet + per-agent eval/refresh + dual JSON-Schema → Pydantic + Zod codegen — with a leaner alternative built around the same artifacts contract:
@@ -264,10 +274,13 @@ Single-language Python implementation, working end-to-end. 1080p MP4 output, lib
 
 Committed example outputs in `runs/_demos/`:
 
-* `dvg_demo_v1.mp4` — full pipeline demo (22 s)
-* `h2_animated.mp4` — animated transforms demo
+* **`dvg_demo_v1.mp4`** — full pipeline demo (22 s, 3.7 MB, −14.3 LUFS) ← made with dvg
+* **`dvg_short_v1.mp4`** — short-form 10 s variant (2.5 MB, −14.6 LUFS)
+* **`dvg_moods_v1.mp4`** — caption-mood reference card (18 s, 0.5 MB)
+* **`dvg_external_v2.mp4`** — example.com captured with `--narrations` (8 s, 331 KB)
+* `h2_animated.mp4` — keyframe animation demo
 * `h1/final.mp4` — first end-to-end render
-* `*.composition.json` — the paired compositions for each
+* `*_composition.json` — the paired compositions for each
 
 ## License
 
