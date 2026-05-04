@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>dvg intro</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; }
+  body {
+    background: transparent;
+    color: #ffffff;
+    font-family: -apple-system, "SF Pro Display", "Helvetica Neue", Inter, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+  }
+  .frame {
+    text-align: center;
+    width: 100%;
+    padding: 0 8vw;
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 0.6rem;
+    padding: 0.45rem 1.1rem; border-radius: 999px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #cbd5e1; font-size: 0.95rem;
+    margin-bottom: 2rem; backdrop-filter: blur(12px);
+  }
+  .badge .dot {
+    width: 0.6rem; height: 0.6rem; border-radius: 50%;
+    background: #3b82f6;
+    box-shadow: 0 0 12px rgba(59,130,246,0.7);
+  }
+  h1 {
+    font-size: 9rem; line-height: 0.95; letter-spacing: -0.05em;
+    font-weight: 700;
+  }
+  h1 .grad {
+    background: linear-gradient(115deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+    background-clip: text; -webkit-background-clip: text;
+    color: transparent;
+  }
+  p {
+    margin-top: 1.6rem; color: #94a3b8;
+    font-size: 1.6rem; max-width: 36rem;
+    margin-left: auto; margin-right: auto;
+  }
+  .underline {
+    margin-top: 1.6rem; display: inline-block;
+    height: 4px; width: 6rem; border-radius: 2px;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  }
+</style>
+</head>
+<body>
+  <div class="frame">
+    <div class="badge"><span class="dot"></span>open source · MIT</div>
+    <h1><span class="grad">dvg</span></h1>
+    <p>production demo videos in one command</p>
+    <div class="underline"></div>
+  </div>
+</body>
+</html>

@@ -198,7 +198,7 @@ def _write_header(buf: io.StringIO, comp: Composition) -> None:
     buf.write("Collisions: Normal\n")
     buf.write(f"PlayResX: {comp.width}\n")
     buf.write(f"PlayResY: {comp.height}\n")
-    buf.write("WrapStyle: 0\n")
+    buf.write("WrapStyle: 2\n")  # 2 = no auto-wrap, only \N breaks lines
     buf.write("ScaledBorderAndShadow: yes\n")
     buf.write("YCbCr Matrix: TV.709\n\n")
 
@@ -307,27 +307,30 @@ def _write_events(
         )
 
     for tl in titles:
-        # title card: optional dim background drawn as a separate rectangle "Dialogue"
-        # using \\p1 vector mode would be ideal but ffmpeg drawbox is simpler — we'll
-        # let the renderer add a drawbox filter. Here, just the text.
+        # Combine title + optional subtitle as one multi-line dialogue so the
+        # block centers around the canvas middle on \an5.
         start = _hh_mm_ss(tl.time[0])
         end = _hh_mm_ss(tl.time[1])
         title_style = _title_style_name(tl, "title")
         fi_ms = int(tl.fade_in * 1000) or 400
         fo_ms = int(tl.fade_out * 1000) or 400
         title_text = _escape_ass_text(tl.title)
-        buf.write(
-            f"Dialogue: {tl.z + 1},{start},{end},{title_style},,0,0,0,,"
-            f"{{\\fad({fi_ms},{fo_ms})}}{title_text}\n"
-        )
         if tl.subtitle:
-            sub_style = _title_style_name(tl, "subtitle")
+            # Use a per-line style override for the subtitle line: smaller, dimmer,
+            # italic. Inline overrides via {\fnNAME\fsSIZE\1cCOLOR} apply to the rest
+            # of the dialogue until the next override block.
+            sub_size = tl.subtitle_size
+            sub_color = _hex_to_ass_color(tl.subtitle_color)
             sub_text = _escape_ass_text(tl.subtitle)
-            # subtitle slightly below title via marginV adjustment
-            buf.write(
-                f"Dialogue: {tl.z + 1},{start},{end},{sub_style},,0,0,{tl.title_size + 30},,"
-                f"{{\\fad({fi_ms},{fo_ms})}}{sub_text}\n"
+            text = (
+                f"{{\\fad({fi_ms},{fo_ms})}}{title_text}"
+                f"\\N{{\\fs{sub_size}\\1c{sub_color}\\i1}}{sub_text}"
             )
+        else:
+            text = f"{{\\fad({fi_ms},{fo_ms})}}{title_text}"
+        buf.write(
+            f"Dialogue: {tl.z + 1},{start},{end},{title_style},,0,0,0,,{text}\n"
+        )
 
 
 def _escape_ass_text(text: str) -> str:

@@ -24,12 +24,14 @@ from pathlib import Path
 
 from dvg.composition.audio import build_audio_stem, measure_loudness
 from dvg.composition.captions.ass import compile_ass
+from dvg.composition.html_layer import render_static_html_sync
 from dvg.keyframes import compile_to_ffmpeg_expr
 from dvg.models import (
     Anchor,
     CaptionLayer,
     Composition,
     Fit,
+    HTMLLayer,
     ImageLayer,
     TitleLayer,
     VideoLayer,
@@ -73,9 +75,43 @@ def render(
     ass_path.write_text(ass_text)
     intermediates = [audio.out, ass_path]
 
+    # 2.5) Pre-render HTML layers to PNGs (treated as ImageLayers downstream)
+    html_image_layers: list[ImageLayer] = []
+    for idx, layer in enumerate(comp.layers):
+        if isinstance(layer, HTMLLayer):
+            png_path = work / f"html_layer_{idx}.png"
+            bbox = layer.bbox or (0, 0, comp.width, comp.height)
+            render_static_html_sync(
+                layer,
+                png_path,
+                width=bbox[2],
+                height=bbox[3],
+                transparent=layer.transparent,
+            )
+            intermediates.append(png_path)
+            # Synthesize an ImageLayer
+            from dvg.models import Anchor as _Anchor
+
+            html_image_layers.append(
+                ImageLayer(
+                    src=png_path,
+                    time=layer.time,
+                    z=layer.z,
+                    opacity=layer.opacity,
+                    fade_in=layer.fade_in,
+                    fade_out=layer.fade_out,
+                    transform=layer.transform,
+                    anchor=_Anchor.TOP_LEFT,
+                    offset=(bbox[0], bbox[1]),
+                    scale=1.0,
+                )
+            )
+
     # 3) Assemble video filter graph
     video_layers = [layer for layer in comp.layers if isinstance(layer, VideoLayer)]
-    image_layers = [layer for layer in comp.layers if isinstance(layer, ImageLayer)]
+    image_layers = [
+        layer for layer in comp.layers if isinstance(layer, ImageLayer)
+    ] + html_image_layers
 
     inputs: list[str] = []
     filter_parts: list[str] = []
@@ -100,10 +136,21 @@ def render(
         )
         current_label = next_label
 
-    # Image layers
+    # Image layers — explicit framerate + duration to keep ffmpeg's filter graph
+    # in sync with the video stream. Plain `-loop 1` defaults to 25fps which
+    # desyncs the overlay graph and causes earlier video overlays to drop.
     img_input_offset = len(video_layers)
     for idx, il in enumerate(image_layers):
-        inputs += ["-loop", "1", "-i", str(il.src)]
+        inputs += [
+            "-framerate",
+            str(comp.fps),
+            "-loop",
+            "1",
+            "-t",
+            f"{comp.duration:.3f}",
+            "-i",
+            str(il.src),
+        ]
         ffmpeg_in = img_input_offset + idx
         prepared, out_label = _prepare_image_layer(il, comp, ffmpeg_in)
         filter_parts.append(prepared)
@@ -164,10 +211,10 @@ def render(
         str(comp.fps),
         str(out_path),
     ]
+    # always save filter graph for debugging
+    (work / "filter_complex.txt").write_text(filter_complex)
     proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
     if proc.returncode != 0:
-        # Save filter graph for debugging.
-        (work / "filter_complex.txt").write_text(filter_complex)
         raise RuntimeError(
             f"render failed (rc={proc.returncode}). "
             f"filter_complex saved to {work / 'filter_complex.txt'}\n"
@@ -207,19 +254,16 @@ def _prepare_video_layer(
 ) -> tuple[str, str]:
     """Return (chain, out_label) for this video layer's own filter chain.
 
-    Crops/scales to fit the canvas, applies fades, retimes via setpts.
+    Order: scale/crop → setpts shift to comp time → fades (now in comp time) →
+    optional opacity. Putting setpts BEFORE fades ensures fade `st` is on the
+    same clock as the comp's timeline.
     """
     chain = f"[{idx}:v]"
-    # speed
     if vl.speed != 1.0:
         chain += f"setpts={1/vl.speed:.6f}*PTS,"
-    # crop in 0..1 source-relative coords
     if vl.crop is not None:
         x, y, w, h = vl.crop
-        chain += (
-            f"crop=iw*{w:.6f}:ih*{h:.6f}:iw*{x:.6f}:ih*{y:.6f},"
-        )
-    # scale to canvas based on fit
+        chain += f"crop=iw*{w:.6f}:ih*{h:.6f}:iw*{x:.6f}:ih*{y:.6f},"
     if vl.fit == Fit.COVER:
         chain += (
             f"scale={comp.width}:{comp.height}:force_original_aspect_ratio=increase,"
@@ -228,40 +272,58 @@ def _prepare_video_layer(
     elif vl.fit == Fit.CONTAIN:
         chain += (
             f"scale={comp.width}:{comp.height}:force_original_aspect_ratio=decrease,"
-            f"pad={comp.width}:{comp.height}:(ow-iw)/2:(oh-ih)/2:color={_strip_hash(comp.background)},"
+            f"pad={comp.width}:{comp.height}:(ow-iw)/2:(oh-ih)/2:"
+            f"color={_strip_hash(comp.background)},"
         )
     elif vl.fit == Fit.FILL:
         chain += f"scale={comp.width}:{comp.height},"
-    # fade
+
+    # Shift to comp time FIRST so fade timestamps are in comp time.
+    # tpad prepends frozen frames (or transparent if alpha) to fill the gap.
+    if vl.time[0] > 0:
+        chain += f"setpts=PTS+{vl.time[0]:.6f}/TB,"
+
+    # Fades now in comp/output time
     if vl.fade_in > 0:
         chain += f"fade=t=in:st={vl.time[0]:.3f}:d={vl.fade_in:.3f},"
     if vl.fade_out > 0:
         chain += f"fade=t=out:st={vl.time[1] - vl.fade_out:.3f}:d={vl.fade_out:.3f},"
-    # opacity via colorchannelmixer doesn't exist for alpha — use format+colorchannelmixer
     if vl.opacity < 1.0:
         chain += f"format=yuva420p,colorchannelmixer=aa={vl.opacity:.3f},"
-    # tag with timing offset on the layer's own timeline
-    # adelay for video doesn't exist; we use overlay's enable= for time gating.
-    chain += f"setpts=PTS+{vl.time[0]:.6f}/TB[v{idx}]"
+    chain = chain.rstrip(",")
+    chain += f"[v{idx}]"
     return chain, f"[v{idx}]"
 
 
 def _prepare_image_layer(
     il: ImageLayer, comp: Composition, idx: int
 ) -> tuple[str, str]:
+    """Prepare an image input for overlay. Uses format=rgba to keep alpha.
+
+    Fades use the layer-relative time AFTER setpts has been applied.
+    """
     chain = f"[{idx}:v]"
+    chain += "format=rgba,"
     if il.scale != 1.0:
         chain += f"scale=iw*{il.scale:.4f}:ih*{il.scale:.4f},"
     if il.opacity < 1.0:
-        chain += f"format=yuva420p,colorchannelmixer=aa={il.opacity:.3f},"
-    if il.fade_in > 0 or il.fade_out > 0:
-        if il.fade_in > 0:
-            chain += f"fade=t=in:st={il.time[0]:.3f}:d={il.fade_in:.3f}:alpha=1,"
-        if il.fade_out > 0:
-            chain += (
-                f"fade=t=out:st={il.time[1] - il.fade_out:.3f}:d={il.fade_out:.3f}:alpha=1,"
-            )
-    chain += f"setpts=PTS-STARTPTS[i{idx}]"
+        chain += f"colorchannelmixer=aa={il.opacity:.3f},"
+    # Trim to the layer's lifetime so the image is a finite stream — looped images
+    # at unmatched fps confuse downstream overlay timing. Then re-base PTS to 0
+    # and add a delay equal to the layer's start (so the overlay sees the stream
+    # appearing at the right comp time).
+    chain += f"trim=duration={il.duration:.3f},setpts=PTS-STARTPTS,"
+    if il.fade_in > 0:
+        chain += f"fade=t=in:st=0:d={il.fade_in:.3f}:alpha=1,"
+    if il.fade_out > 0:
+        chain += (
+            f"fade=t=out:st={il.duration - il.fade_out:.3f}:d={il.fade_out:.3f}:alpha=1,"
+        )
+    if il.time[0] > 0:
+        delay_ms = int(il.time[0] * 1000)
+        chain += f"setpts=PTS+{il.time[0]:.6f}/TB,"
+    chain = chain.rstrip(",")
+    chain += f"[i{idx}]"
     return chain, f"[i{idx}]"
 
 

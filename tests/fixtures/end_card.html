@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>dvg end</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; }
+  body {
+    background: transparent;
+    color: #ffffff;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+  }
+  .frame {
+    text-align: center;
+    padding: 0 8vw;
+    background: rgba(10, 10, 15, 0.85);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 1rem;
+    padding: 2.5rem 3rem;
+    backdrop-filter: blur(20px);
+  }
+  .label {
+    color: #94a3b8; font-size: 1rem; margin-bottom: 0.75rem;
+    letter-spacing: 0.04em;
+  }
+  .cmd {
+    font-size: 2rem; color: #f5f5f5;
+  }
+  .cmd .prompt { color: #94a3b8; margin-right: 0.6rem; }
+  .cmd .arg { color: #ffd28b; }
+  .out { margin-top: 1.5rem; color: #6b7280; font-size: 0.95rem; }
+  .grad {
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    background-clip: text; -webkit-background-clip: text;
+    color: transparent;
+  }
+</style>
+</head>
+<body>
+  <div class="frame">
+    <div class="label">try it</div>
+    <div class="cmd"><span class="prompt">$</span>pip install <span class="grad">dvg</span></div>
+    <div class="cmd" style="margin-top: 0.7rem;"><span class="prompt">$</span><span class="grad">dvg</span> make-video <span class="arg">your-app.com</span></div>
+    <div class="out">→ final.mp4 · 1080p · −14 LUFS</div>
+  </div>
+</body>
+</html>
