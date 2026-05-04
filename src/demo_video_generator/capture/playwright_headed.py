@@ -178,7 +178,7 @@ def capture_url_headed(spec: CaptureSpec) -> CaptureResult:
         )
 
     try:
-        from playwright.sync_api import sync_playwright  # type: ignore[import-not-found]
+        from playwright.sync_api import sync_playwright
     except ImportError as e:
         raise RuntimeError(
             "playwright not installed. Run: uv pip install playwright && playwright install chromium"
