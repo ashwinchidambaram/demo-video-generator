@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "license": "synthetic-cc0",
+  "note": "Phase 5 ships a tiny synthetic pack so the pipeline runs end-to-end without bundling Kenney's ~150 .wav files. Phase 5.5 vendors the curated 30-50 Kenney clips (CC0) per ultraplan R2's recommendation.",
+  "clips": [
+    {
+      "id": "click_soft_01",
+      "filename": "click_soft_01.wav",
+      "tags": ["click", "ui", "soft", "neutral"],
+      "duration_ms": 80,
+      "description": "Soft UI click."
+    },
+    {
+      "id": "confirm_blip_01",
+      "filename": "confirm_blip_01.wav",
+      "tags": ["confirm", "submit", "success", "positive"],
+      "duration_ms": 200,
+      "description": "Short positive confirmation blip."
+    },
+    {
+      "id": "modal_whoosh_01",
+      "filename": "modal_whoosh_01.wav",
+      "tags": ["modal", "open", "transition"],
+      "duration_ms": 180,
+      "description": "Subtle whoosh for modal opens."
+    },
+    {
+      "id": "error_thump_01",
+      "filename": "error_thump_01.wav",
+      "tags": ["error", "fail", "negative"],
+      "duration_ms": 150,
+      "description": "Muted thump for errors (not a buzzer)."
+    }
+  ],
+  "kind_to_clip": {
+    "click": "click_soft_01",
+    "submit": "confirm_blip_01",
+    "modal_open": "modal_whoosh_01",
+    "modal_close": "click_soft_01",
+    "navigation": "click_soft_01",
+    "console_error": "error_thump_01",
+    "network_failure": "error_thump_01"
+  }
+}

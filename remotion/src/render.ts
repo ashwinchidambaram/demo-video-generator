@@ -31,6 +31,45 @@ async function main() {
   // Resolve src paths relative to the composition.json's directory so footage/music
   // load from the run dir.
   const runDir = path.dirname(compositionJsonPath);
+  const runId = path.basename(runDir);
+
+  // Detect whether footage / music are real (non-empty) — Phase 1 capture
+  // ships an empty placeholder MP4; Phase 6 DemoVideo only mounts the
+  // <OffthreadVideo> layer when bytes are present.
+  const footagePath = path.join(runDir, compositionData.footage?.src ?? "");
+  const hasFootage = fs.existsSync(footagePath) && fs.statSync(footagePath).size > 1024;
+
+  const musicPath = path.join(runDir, compositionData.audio?.music?.src ?? "");
+  const hasMusic = fs.existsSync(musicPath) && fs.statSync(musicPath).size > 1024;
+
+  // Stage run-dir media into remotion/public/<runId>/ so staticFile() can serve
+  // them. Remotion v4 doesn't accept file:// URLs; assets must live under public/.
+  // We symlink (cheap) for sources >1KB; cleanup happens after render.
+  const publicRunDir = path.resolve(__dirname, "..", "public", runId);
+  fs.mkdirSync(publicRunDir, { recursive: true });
+  const stagedAssets: string[] = [];
+  const linkAsset = (relPath: string) => {
+    const src = path.join(runDir, relPath);
+    if (!fs.existsSync(src) || fs.statSync(src).size === 0) return;
+    const dst = path.join(publicRunDir, relPath);
+    fs.mkdirSync(path.dirname(dst), { recursive: true });
+    if (fs.existsSync(dst)) fs.unlinkSync(dst);
+    // Copy (not symlink) — Remotion's bundler doesn't follow symlinks.
+    fs.copyFileSync(src, dst);
+    stagedAssets.push(dst);
+  };
+  if (hasFootage) linkAsset(compositionData.footage.src);
+  if (hasMusic) linkAsset(compositionData.audio.music.src);
+  for (const sfx of compositionData.audio?.sfx ?? []) {
+    linkAsset(sfx.src);
+  }
+
+  const inputProps = {
+    composition: compositionData,
+    runId,
+    hasFootage,
+    hasMusic,
+  };
 
   const entry = path.resolve(__dirname, "index.tsx");
   const bundleLocation = await bundle({
@@ -42,25 +81,33 @@ async function main() {
   const composition = await selectComposition({
     serveUrl: bundleLocation,
     id: "DemoVideo",
-    inputProps: { composition: compositionData, runDir },
+    inputProps,
   });
 
-  // The composition's durationInFrames defaults are overridden by inputProps
-  // via Root.tsx's calculateMetadata callback. As a belt-and-braces measure
-  // we override here too based on composition.duration_seconds.
   const fps = composition.fps;
-  const durationInFrames = Math.max(
-    1,
-    Math.round((compositionData.duration_seconds ?? 10) * fps),
-  );
+  const durationInFrames = Math.max(1, Math.round((compositionData.duration_seconds ?? 10) * fps));
 
   await renderMedia({
     composition: { ...composition, durationInFrames },
     serveUrl: bundleLocation,
     codec: "h264",
     outputLocation: outPath,
-    inputProps: { composition: compositionData, runDir },
+    inputProps,
   });
+
+  // Cleanup staged symlinks (the public/<runId>/ dir is per-run, removed wholesale).
+  for (const p of stagedAssets) {
+    try {
+      fs.unlinkSync(p);
+    } catch {
+      // best-effort
+    }
+  }
+  try {
+    fs.rmdirSync(publicRunDir, { recursive: true });
+  } catch {
+    // best-effort
+  }
 
   console.log(JSON.stringify({ output: outPath, bundle: bundleLocation }, null, 2));
 }
