@@ -227,6 +227,22 @@ def dispatch(
         write_json_atomic(manifest_path, manifest)
         completed.append(view.name)
 
+    # Aggregate cost / duration summary into manifest (Phase 9 polish).
+    total_cost = 0.0
+    total_duration = 0.0
+    for stage in manifest["stages"]:
+        if stage.get("cost_usd"):
+            total_cost += float(stage["cost_usd"])
+        if stage.get("duration_seconds"):
+            total_duration += float(stage["duration_seconds"])
+    manifest["summary"] = {
+        "total_cost_usd": round(total_cost, 4),
+        "total_duration_seconds": round(total_duration, 3),
+        "stages_completed": len(completed),
+        "stages_skipped": len(skipped),
+    }
+    write_json_atomic(manifest_path, manifest)
+
     final = run_dir / "final.mp4"
     return RunResult(
         run_dir=run_dir,
@@ -235,3 +251,48 @@ def dispatch(
         final_artifact=final if final.exists() else None,
         error=error,
     )
+
+
+def _qa_has_high_severity(run_dir: Path) -> bool:
+    """Check if the run's qa.json contains any severity: high issue."""
+    qa_path = run_dir / "qa.json"
+    if not qa_path.is_file():
+        return False
+    try:
+        import json as _json
+
+        qa = _json.loads(qa_path.read_text())
+    except Exception:
+        return False
+    return any(issue.get("severity") == "high" for issue in qa.get("issues", []))
+
+
+def cleanup_runs(runs_root: Path, *, keep: int = 20) -> list[Path]:
+    """Delete oldest runs beyond the `keep` most recent. Per ultraplan R3:
+    never delete a run with severity:high in qa.json (preserved for debugging).
+
+    Returns the list of run dirs that were removed.
+    """
+    if not runs_root.is_dir():
+        return []
+    # Run dirs are timestamp-named; refresh/ etc are excluded by prefix.
+    run_dirs = sorted(
+        (p for p in runs_root.iterdir() if p.is_dir() and p.name.startswith("20")),
+        key=lambda p: p.name,
+    )
+    if len(run_dirs) <= keep:
+        return []
+
+    candidates = run_dirs[:-keep]
+    removed: list[Path] = []
+    for d in candidates:
+        if _qa_has_high_severity(d):
+            continue  # preserve for debugging
+        try:
+            import shutil
+
+            shutil.rmtree(d)
+            removed.append(d)
+        except OSError:
+            pass
+    return removed

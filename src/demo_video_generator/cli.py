@@ -7,6 +7,7 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
+from . import curator as curator_mod
 from . import doctor as doctor_mod
 from . import run as run_mod
 from .errors import DvgError, DvgRuntimeError, die
@@ -36,6 +37,7 @@ def run_cmd(
     runs_root: Path = typer.Option(Path("runs"), "--runs-root"),
     from_stage: str | None = typer.Option(None, "--from", help="Invalidate this stage and downstream, then re-run."),
     skip_render: bool = typer.Option(False, "--skip-render", help="Skip render + review stages (CI / no-browser environments)."),
+    keep_runs: int = typer.Option(20, "--keep-runs", help="After this run completes, prune older runs beyond this count (severity:high runs preserved)."),
 ) -> None:
     """Deterministic driver: walks manifest, dispatches missing-artifact agents."""
     if input.startswith(("http://", "https://")):
@@ -85,6 +87,28 @@ def run_cmd(
         raise typer.Exit(1)
     if result.final_artifact:
         console.print(f"[green]final:[/] {result.final_artifact}")
+
+    # Cleanup older runs (Phase 9 polish per ultraplan R3 / R4).
+    if keep_runs > 0:
+        removed = run_mod.cleanup_runs(runs_root, keep=keep_runs)
+        if removed:
+            console.print(f"[dim]pruned {len(removed)} old runs (kept {keep_runs}; severity:high preserved)[/]")
+
+
+@app.command("refresh")
+def refresh_cmd(
+    agents: list[str] = typer.Option([], "--agent", help="Refresh only these agents (repeatable)."),
+) -> None:
+    """Knowledge-curator skeleton: walk agent fleet's refresh.md files and emit a report.
+
+    Phase 10 ships the workflow (parse refresh.md, write report + proposals.json,
+    update freshness manifest). Real WebFetch + LLM proposal generation lands
+    when API keys are wired.
+    """
+    result = curator_mod.refresh(agents=agents or None)
+    console.print(f"[green]refresh[/] {result['run_id']}: {len(result['agents'])} agents inspected")
+    console.print(f"  report: {result['report']}")
+    console.print(f"  proposals: {result['proposals']}")
 
 
 def main() -> None:
