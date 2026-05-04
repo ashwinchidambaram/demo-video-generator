@@ -1,17 +1,20 @@
 """Knowledge-curator subcommand.
 
-Phase 10 skeleton per .claude/agents/knowledge-curator/design.md and
-_shared/refresh-protocol.md. Reads each agent's refresh.md, parses the
-required sections (Sources / Queries / Freshness target / Scope / Pin
-facts / Anti-scope), produces a structured report at
-`runs/refresh/<ts>/report.md` and an empty proposals.json.
+Phase 10 (this commit): walks the fleet's refresh.md, parses the required
+sections (Sources / Queries / Freshness target / Scope / Pin facts /
+Anti-scope), and OPTIONALLY fetches Sources URLs via `requests`. For each
+fetched source it computes the SHA256 of the response body, records
+Last-Modified, and verifies whether each Pin Fact is still verbatim
+present. This produces a real report + proposals.json shape — no LLM
+involved.
 
-Real WebFetch + LLM proposal generation is gated on API keys + the curator
-agent's prompt; this skeleton commits the workflow shape so:
-  - `dvg refresh` walks the fleet and produces a report
-  - `runs/refresh/manifest.json` updates last_run timestamps + per-agent
-    staleness placeholders
-  - The pre-commit `apply-refresh` flow has a target to slot into.
+LLM-driven proposal generation (semantic refresh, citation excerpt
+extraction, paragraph-level diff) is the further Phase 10.5; that requires
+API keys.
+
+apply-refresh: see `dvg apply-refresh <ts>` — re-fetches each citation
+URL and verifies sha256 matches before applying any proposal. Acts as the
+post-hoc verifier per the curator design's "citation faking" mitigation.
 """
 
 from __future__ import annotations
@@ -96,11 +99,60 @@ def discover_agents() -> list[str]:
     )
 
 
-def refresh(*, agents: list[str] | None = None) -> dict[str, Any]:
+def _fetch_url(url: str, *, timeout: int = 15) -> dict[str, Any]:
+    """Fetch a URL via requests; return canonical fields for citation:
+    {url, fetched_at, status, body_sha256, last_modified, body_excerpt}.
+
+    Body excerpt is the first 500 chars (sanitized) — enough for Pin Fact
+    verification without committing the full page to disk.
+    """
+    out: dict[str, Any] = {
+        "url": url,
+        "fetched_at": dt.datetime.now(dt.UTC).isoformat(),
+        "status": None,
+        "body_sha256": None,
+        "last_modified": None,
+        "body_excerpt": None,
+        "error": None,
+    }
+    try:
+        import requests  # type: ignore[import-untyped]
+
+        resp = requests.get(url, timeout=timeout, allow_redirects=True)
+        out["status"] = resp.status_code
+        out["last_modified"] = resp.headers.get("Last-Modified")
+        body = resp.text
+        out["body_sha256"] = _sha256_str(body)
+        out["body_excerpt"] = body[:500].replace("\n", " ").strip() if body else None
+    except Exception as e:
+        out["error"] = str(e)[:200]
+    return out
+
+
+def _sha256_str(s: str) -> str:
+    import hashlib
+
+    return hashlib.sha256(s.encode("utf-8", errors="replace")).hexdigest()
+
+
+def _verify_pin_facts(body: str, pin_facts: list[str]) -> list[dict[str, Any]]:
+    """Per Pin Fact: check whether the verbatim string still appears in body."""
+    out: list[dict[str, Any]] = []
+    for fact in pin_facts:
+        out.append({"fact": fact, "still_present": fact in body})
+    return out
+
+
+def refresh(
+    *,
+    agents: list[str] | None = None,
+    fetch: bool = False,
+) -> dict[str, Any]:
     """Walk the fleet, parse each agent's refresh.md, write a report.
 
-    Phase 10 stub: emits report + empty proposals.json. WebFetch + proposal
-    generation are gated on API keys.
+    fetch=False (default): skeleton — fast, no network, empty proposals.
+    fetch=True: WebFetch each Sources URL via requests, verify Pin Facts,
+                emit citation-rich proposals.json. Still no LLM.
     """
     selected = agents or discover_agents()
     now = dt.datetime.now(dt.UTC)
@@ -109,9 +161,36 @@ def refresh(*, agents: list[str] | None = None) -> dict[str, Any]:
     refresh_dir.mkdir(parents=True, exist_ok=True)
 
     docs: dict[str, RefreshDoc] = {}
+    fetched_by_agent: dict[str, list[dict[str, Any]]] = {}
+    pin_facts_results_by_agent: dict[str, list[list[dict[str, Any]]]] = {}
     for agent in selected:
         refresh_md = AGENTS_ROOT / agent / "refresh.md"
         docs[agent] = _parse_refresh_md(refresh_md, agent=agent)
+        if fetch:
+            fetched: list[dict[str, Any]] = []
+            pin_results: list[list[dict[str, Any]]] = []
+            for url in docs[agent].sources:
+                if not url.startswith(("http://", "https://")):
+                    continue
+                meta = _fetch_url(url)
+                fetched.append(meta)
+                # Pin Fact verification needs full body — re-fetch for a deeper read.
+                # (We cap at 500 chars in body_excerpt for the citation; here we want full text.)
+                if docs[agent].pin_facts and meta.get("status") == 200:
+                    try:
+                        import requests
+
+                        resp = requests.get(url, timeout=15)
+                        pin_results.append(_verify_pin_facts(resp.text, docs[agent].pin_facts))
+                    except Exception:
+                        pin_results.append(
+                            [
+                                {"fact": f, "still_present": None, "error": "fetch_failed"}
+                                for f in docs[agent].pin_facts
+                            ]
+                        )
+            fetched_by_agent[agent] = fetched
+            pin_facts_results_by_agent[agent] = pin_results
 
     # Report (markdown, human-readable).
     lines: list[str] = []
@@ -128,16 +207,66 @@ def refresh(*, agents: list[str] | None = None) -> dict[str, Any]:
         lines.append(f"- pin facts: {len(doc.pin_facts)} configured")
         if not doc.sources and not doc.queries:
             lines.append("- _stub_: refresh.md is the Phase 1 placeholder; real sources land with the agent's implementation phase")
+        if fetch and agent in fetched_by_agent:
+            for meta in fetched_by_agent[agent]:
+                status = meta.get("status")
+                err = meta.get("error")
+                if err:
+                    lines.append(f"- fetch error: {meta['url']} → {err}")
+                else:
+                    lm = meta.get("last_modified") or "unknown"
+                    lines.append(
+                        f"- fetched: {meta['url']} → {status}, "
+                        f"sha256={meta['body_sha256'][:12] if meta['body_sha256'] else 'n/a'}, "
+                        f"last-modified={lm}"
+                    )
+            for url_pin_results in pin_facts_results_by_agent.get(agent, []):
+                for r in url_pin_results:
+                    if r["still_present"] is False:
+                        lines.append(
+                            f"- ⚠ pin fact NOT FOUND in fetched body: {r['fact'][:60]}…"
+                        )
         lines.append("")
     write_atomic(refresh_dir / "report.md", "\n".join(lines).encode("utf-8"))
 
-    # Empty proposals (real proposals require WebFetch + LLM).
+    # Build proposals.json. Without an LLM we can't yet propose paragraph
+    # rewrites; we DO emit pin-fact-failures as candidate proposals carrying
+    # the citation envelope (so apply-refresh has something to verify).
+    proposals: list[dict[str, Any]] = []
+    if fetch:
+        for agent, meta_list in fetched_by_agent.items():
+            agent_pin_results = pin_facts_results_by_agent.get(agent, [])
+            for url_idx, meta in enumerate(meta_list):
+                if url_idx >= len(agent_pin_results):
+                    continue
+                this_url_pin_results: list[dict[str, Any]] = agent_pin_results[url_idx]
+                failed_pins = [
+                    r for r in this_url_pin_results if r.get("still_present") is False
+                ]
+                for fp in failed_pins:
+                    proposals.append(
+                        {
+                            "agent": agent,
+                            "kind": "pin_fact_drift",
+                            "old_excerpt": fp["fact"],
+                            "new_excerpt": "<requires LLM extraction; gated on API key>",
+                            "citation": {
+                                "url": meta["url"],
+                                "fetched_at": meta["fetched_at"],
+                                "excerpt": meta.get("body_excerpt", ""),
+                                "excerpt_sha256": _sha256_str(meta.get("body_excerpt", "") or ""),
+                                "body_sha256": meta.get("body_sha256"),
+                                "last_modified": meta.get("last_modified"),
+                            },
+                        }
+                    )
+
     write_json_atomic(
         refresh_dir / "proposals.json",
         {
             "schema_version": 1,
-            "stub": True,
-            "proposals": [],
+            "fetch_mode": "real" if fetch else "skeleton",
+            "proposals": proposals,
         },
     )
 

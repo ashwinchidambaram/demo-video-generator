@@ -98,15 +98,21 @@ def run_cmd(
 @app.command("refresh")
 def refresh_cmd(
     agents: list[str] = typer.Option([], "--agent", help="Refresh only these agents (repeatable)."),
+    fetch: bool = typer.Option(False, "--fetch", help="WebFetch each Sources URL via requests; verify Pin Facts. No LLM."),
 ) -> None:
-    """Knowledge-curator skeleton: walk agent fleet's refresh.md files and emit a report.
+    """Knowledge-curator: walk agent fleet's refresh.md files and emit a report.
 
-    Phase 10 ships the workflow (parse refresh.md, write report + proposals.json,
-    update freshness manifest). Real WebFetch + LLM proposal generation lands
-    when API keys are wired.
+    Default (no --fetch): skeleton walk only — fast, no network, freshness
+    manifest update. With --fetch: actually retrieves each Sources URL via
+    requests, computes SHA256 of body, checks Pin Facts for verbatim presence,
+    emits citation-rich proposals for pin-fact drift. LLM-driven semantic
+    refresh is the Phase 10.5 step (gated on API keys).
     """
-    result = curator_mod.refresh(agents=agents or None)
-    console.print(f"[green]refresh[/] {result['run_id']}: {len(result['agents'])} agents inspected")
+    result = curator_mod.refresh(agents=agents or None, fetch=fetch)
+    console.print(
+        f"[green]refresh[/] {result['run_id']}: {len(result['agents'])} agents inspected"
+        + (" [bold yellow](fetch=on)[/]" if fetch else "")
+    )
     console.print(f"  report: {result['report']}")
     console.print(f"  proposals: {result['proposals']}")
 
