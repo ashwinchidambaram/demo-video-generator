@@ -295,7 +295,7 @@ def _smoke_qa_reviewer(case: dict) -> tuple[bool, str]:
                 {
                     "schema_version": 1,
                     "fps": 30,
-                    "duration_seconds": 32,
+                    "duration_seconds": 70,
                     "resolution": {"width": 1920, "height": 1080},
                     "footage": {"src": "footage.mp4"},
                     "audio": {
