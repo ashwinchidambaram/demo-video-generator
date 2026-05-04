@@ -106,10 +106,11 @@ def build_audio_stem(comp: Composition, out_dir: Path) -> AudioBuildResult:
             f"normalize=0,aformat=channel_layouts=stereo[mixed]"
         )
 
-    # Final loudnorm to comp target + alimiter for peak ceiling.
-    # Two-pass loudnorm is more accurate; for now single-pass with the integrated target.
+    # Final loudnorm + alimiter ceiling. Loudnorm aims 0.5 dB under the
+    # ceiling so the alimiter has headroom to clamp without ringing.
+    loudnorm_tp = comp.peak_dbfs - 0.5
     filter_parts.append(
-        f"[mixed]loudnorm=I={comp.final_loudness}:TP={comp.peak_dbfs}:LRA=11,"
+        f"[mixed]loudnorm=I={comp.final_loudness}:TP={loudnorm_tp:.2f}:LRA=11,"
         f"alimiter=limit={_db_to_lin(comp.peak_dbfs):.4f}:level=disabled[out]"
     )
 

@@ -1,0 +1,179 @@
+{
+  "schema_version": 2,
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "duration": 10.0,
+  "background": "#0a0a0a",
+  "theme": {
+    "font_family": "Inter",
+    "font_family_mono": "JetBrains Mono",
+    "color_text": "#ffffff",
+    "color_text_dim": "#9ca3af",
+    "color_accent": "#3b82f6",
+    "color_background": "#0a0a0a",
+    "color_caption_bg": "#000000aa"
+  },
+  "layers": [
+    {
+      "id": null,
+      "time": [
+        0.0,
+        1.6
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.3,
+      "fade_out": 0.3,
+      "transform": null,
+      "kind": "title",
+      "title": "dvg",
+      "subtitle": "demo videos in one command",
+      "background": "#0a0a0a",
+      "title_color": "#ffffff",
+      "subtitle_color": "#9ca3af",
+      "title_size": 180,
+      "subtitle_size": 42,
+      "align": "middle-center"
+    },
+    {
+      "id": null,
+      "time": [
+        1.4,
+        8.5
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.3,
+      "fade_out": 0.3,
+      "transform": null,
+      "kind": "video",
+      "src": "/Users/ashwinchidambaram/dev/projects/demo-video-generator/.worktrees/inventing-new-solutions/runs/short_demo/footage.mp4",
+      "fit": "cover",
+      "mute": true,
+      "speed": 1.0,
+      "crop": null,
+      "ken_burns": 0.04
+    },
+    {
+      "id": null,
+      "time": [
+        2.0,
+        4.0
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.0,
+      "fade_out": 0.0,
+      "transform": null,
+      "kind": "caption",
+      "text": "Capture any URL",
+      "mood": "announce",
+      "anchor": "bottom-center",
+      "margin": 80,
+      "max_width_pct": 0.7,
+      "font": null,
+      "font_size": null,
+      "color": null,
+      "outline": null,
+      "shadow": null,
+      "anchor_event_id": null,
+      "intent_duration": null,
+      "priority": 0
+    },
+    {
+      "id": null,
+      "time": [
+        4.5,
+        6.5
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.0,
+      "fade_out": 0.0,
+      "transform": null,
+      "kind": "caption",
+      "text": "libass + ffmpeg",
+      "mood": "punchline",
+      "anchor": "bottom-center",
+      "margin": 80,
+      "max_width_pct": 0.7,
+      "font": null,
+      "font_size": null,
+      "color": null,
+      "outline": null,
+      "shadow": null,
+      "anchor_event_id": null,
+      "intent_duration": null,
+      "priority": 0
+    },
+    {
+      "id": null,
+      "time": [
+        7.0,
+        8.4
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.0,
+      "fade_out": 0.0,
+      "transform": null,
+      "kind": "caption",
+      "text": "Faster than a webpack bundle",
+      "mood": "tagline",
+      "anchor": "bottom-center",
+      "margin": 80,
+      "max_width_pct": 0.7,
+      "font": null,
+      "font_size": null,
+      "color": null,
+      "outline": null,
+      "shadow": null,
+      "anchor_event_id": null,
+      "intent_duration": null,
+      "priority": 0
+    },
+    {
+      "id": null,
+      "time": [
+        8.5,
+        10.0
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.3,
+      "fade_out": 0.3,
+      "transform": null,
+      "kind": "title",
+      "title": "pip install dvg",
+      "subtitle": null,
+      "background": "#0a0a0a",
+      "title_color": "#3b82f6",
+      "subtitle_color": "#9ca3af",
+      "title_size": 88,
+      "subtitle_size": 36,
+      "align": "middle-center"
+    }
+  ],
+  "audio": [
+    {
+      "id": null,
+      "src": "/Users/ashwinchidambaram/dev/projects/wipro/demo/soundtracks/vibe-flow.mp3",
+      "time": [
+        0.0,
+        10.0
+      ],
+      "role": "music",
+      "target_lufs": -22.0,
+      "volume": 1.0,
+      "fade_in": 0.3,
+      "fade_out": 0.8,
+      "duck_under_captions": true,
+      "duck_db": -9.0
+    }
+  ],
+  "final_loudness": -14.0,
+  "peak_dbfs": -1.0,
+  "title": "dvg short",
+  "description": null
+}
