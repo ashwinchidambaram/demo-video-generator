@@ -10,9 +10,14 @@ from enum import Enum
 from pathlib import Path
 from typing import Annotated, Literal, Self
 
+from typing import TYPE_CHECKING
+
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from dvg.keyframes import Keyframe
+
+if TYPE_CHECKING:
+    from dvg.composition.render import RenderResult as RenderResultLike
 
 # ---- Animation primitives -------------------------------------------------
 
@@ -280,11 +285,11 @@ class Composition(BaseModel):
     title: str | None = None  # for metadata
     description: str | None = None
 
-    def render(self, out: str | Path, **kwargs: object) -> Path:
+    def render(self, out: str | Path, **kwargs: object) -> "RenderResultLike":
         """Convenience: build → render. See dvg.composition.render.render()."""
         from dvg.composition.render import render
 
-        return render(self, out, **kwargs)
+        return render(self, out, **kwargs)  # type: ignore[arg-type]
 
     def flatten(self) -> "Composition":
         """Return a new Composition with all Sequences expanded inline."""

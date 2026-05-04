@@ -25,6 +25,7 @@ from dvg.models import (
     AudioLayer,
     CaptionLayer,
     Composition,
+    Fit,
     Mood,
     Theme,
     TitleLayer,
@@ -64,11 +65,13 @@ def plan_composition(ctx: DirectorContext) -> Composition:
     soundtrack = _pick_soundtrack(ctx)
     theme = _build_theme(ctx)
 
-    layers: list = [
+    layers: list[
+        VideoLayer | TitleLayer | CaptionLayer
+    ] = [
         VideoLayer(
             src=ctx.video_path,
             time=(0.0, ctx.duration_s),
-            fit="cover",
+            fit=Fit.COVER,
         ),
     ]
 
