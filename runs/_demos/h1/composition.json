@@ -1,0 +1,177 @@
+{
+  "schema_version": 2,
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "duration": 12.0,
+  "background": "#0a0a0a",
+  "theme": {
+    "font_family": "Inter",
+    "font_family_mono": "JetBrains Mono",
+    "color_text": "#ffffff",
+    "color_text_dim": "#9ca3af",
+    "color_accent": "#3b82f6",
+    "color_background": "#0a0a0a",
+    "color_caption_bg": "#000000aa"
+  },
+  "layers": [
+    {
+      "id": null,
+      "time": [
+        0.0,
+        12.0
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.0,
+      "fade_out": 0.0,
+      "kind": "video",
+      "src": "/Users/ashwinchidambaram/dev/projects/demo-video-generator/.worktrees/inventing-new-solutions/tests/fixtures/video/fixture_12s.mp4",
+      "fit": "cover",
+      "mute": true,
+      "speed": 1.0,
+      "crop": null
+    },
+    {
+      "id": null,
+      "time": [
+        0.0,
+        2.5
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.5,
+      "fade_out": 0.5,
+      "kind": "title",
+      "title": "dvg",
+      "subtitle": "lean demo-video generator",
+      "background": "#0a0a0a",
+      "title_color": "#ffffff",
+      "subtitle_color": "#9ca3af",
+      "title_size": 120,
+      "subtitle_size": 44,
+      "align": "middle-center"
+    },
+    {
+      "id": null,
+      "time": [
+        3.0,
+        5.5
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.0,
+      "fade_out": 0.0,
+      "kind": "caption",
+      "text": "Composition is a Pydantic model",
+      "mood": "announce",
+      "anchor": "bottom-center",
+      "margin": 80,
+      "max_width_pct": 0.7,
+      "font": null,
+      "font_size": null,
+      "color": null,
+      "outline": null,
+      "shadow": null,
+      "anchor_event_id": null,
+      "intent_duration": null,
+      "priority": 0
+    },
+    {
+      "id": null,
+      "time": [
+        6.0,
+        8.5
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.0,
+      "fade_out": 0.0,
+      "kind": "caption",
+      "text": "No bundling, no Chromium",
+      "mood": "punchline",
+      "anchor": "bottom-center",
+      "margin": 80,
+      "max_width_pct": 0.7,
+      "font": null,
+      "font_size": null,
+      "color": null,
+      "outline": null,
+      "shadow": null,
+      "anchor_event_id": null,
+      "intent_duration": null,
+      "priority": 0
+    },
+    {
+      "id": null,
+      "time": [
+        9.0,
+        11.0
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.0,
+      "fade_out": 0.0,
+      "kind": "caption",
+      "text": "ffmpeg + libass = production-grade",
+      "mood": "explain",
+      "anchor": "bottom-center",
+      "margin": 80,
+      "max_width_pct": 0.7,
+      "font": null,
+      "font_size": null,
+      "color": null,
+      "outline": null,
+      "shadow": null,
+      "anchor_event_id": null,
+      "intent_duration": null,
+      "priority": 0
+    },
+    {
+      "id": null,
+      "time": [
+        11.2,
+        12.0
+      ],
+      "z": 0,
+      "opacity": 1.0,
+      "fade_in": 0.0,
+      "fade_out": 0.0,
+      "kind": "caption",
+      "text": "dvg.dev",
+      "mood": "call_to_action",
+      "anchor": "bottom-center",
+      "margin": 80,
+      "max_width_pct": 0.7,
+      "font": null,
+      "font_size": 72,
+      "color": null,
+      "outline": null,
+      "shadow": null,
+      "anchor_event_id": null,
+      "intent_duration": null,
+      "priority": 0
+    }
+  ],
+  "audio": [
+    {
+      "id": null,
+      "src": "/Users/ashwinchidambaram/dev/projects/wipro/demo/soundtracks/vibe-edm.mp3",
+      "time": [
+        0.0,
+        12.0
+      ],
+      "role": "music",
+      "target_lufs": -22.0,
+      "volume": 1.0,
+      "fade_in": 0.5,
+      "fade_out": 0.8,
+      "duck_under_captions": true,
+      "duck_db": -9.0
+    }
+  ],
+  "final_loudness": -14.0,
+  "peak_dbfs": -1.0,
+  "title": null,
+  "description": null
+}

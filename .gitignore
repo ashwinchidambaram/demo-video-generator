@@ -18,10 +18,6 @@ env/
 .env
 .env.local
 
-# Node (Remotion)
-node_modules/
-.remotion/
-
 # OS
 .DS_Store
 Thumbs.db
@@ -33,17 +29,10 @@ Thumbs.db
 # Worktrees
 .worktrees/
 
-# Project
+# Per-run state (large MP4s, intermediate caches)
 runs/*
-!runs/refresh/
-runs/refresh/*
-!runs/refresh/manifest.json
+!runs/_demos/
+!runs/_demos/**
+
+# Worklog (deprecated; using MEMORY.md)
 .claude/worklog.md
-
-# Codegen output (regenerated via `make schemas`)
-src/demo_video_generator/schemas/*.py
-!src/demo_video_generator/schemas/__init__.py
-remotion/src/schemas/*.ts
-
-# Remotion render output
-remotion/out/

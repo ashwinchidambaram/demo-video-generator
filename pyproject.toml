@@ -1,7 +1,7 @@
 [project]
-name = "demo-video-generator"
-version = "0.1.0"
-description = "Tool that turns 'a thing you built' into a production-quality demo video. v1: 9 specialized Claude Code agents driven by a deterministic Python driver."
+name = "dvg"
+version = "0.2.0"
+description = "Lean demo-video generator: capture → analyze → compose → render. Single language Python, ffmpeg-driven."
 requires-python = ">=3.12"
 authors = [{ name = "Ashwin Chidambaram" }]
 readme = "README.md"
@@ -10,7 +10,10 @@ dependencies = [
     "typer>=0.12.0",
     "pydantic>=2.7",
     "rich>=13.7",
-    "jsonschema>=4.21",
+    "Pillow>=10.0",
+    "imagehash>=4.3",
+    "playwright>=1.42",
+    "anyio>=4.3",
 ]
 
 [project.optional-dependencies]
@@ -19,19 +22,18 @@ dev = [
     "pytest-cov>=5.0",
     "ruff>=0.4",
     "mypy>=1.10",
-    "datamodel-code-generator>=0.25",
     "pre-commit>=3.7",
 ]
 
 [project.scripts]
-dvg = "demo_video_generator.cli:app"
+dvg = "dvg.cli:app"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/demo_video_generator"]
+packages = ["src/dvg"]
 
 [tool.ruff]
 line-length = 100
@@ -43,19 +45,12 @@ select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "RUF"]
 ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
-# Typer idiom: function-call defaults are how options are declared.
-"src/demo_video_generator/cli.py" = ["B008"]
+"src/dvg/cli.py" = ["B008"]
 
 [tool.mypy]
 python_version = "3.12"
 strict = true
 files = ["src"]
-exclude = ["src/demo_video_generator/schemas/.*"]
-# Generated schema modules ship with their own typing; we trust pydantic-generated code.
-
-[[tool.mypy.overrides]]
-module = "demo_video_generator.schemas.*"
-ignore_errors = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

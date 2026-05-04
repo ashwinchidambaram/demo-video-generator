@@ -1,39 +1,52 @@
-# demo-video-generator — Claude Code Instructions
+# dvg (lean) — Claude Code Instructions
 
-## What this project is
+## Branch context
 
-A tool that turns "a thing you built" into a production-quality demo video with minimal friction. The product is a fleet of specialized Claude Code subagents (each at `.claude/agents/<name>/`) backed by a thin Python CLI of deterministic primitives. Orchestration is deterministic via a Python driver (`dvg run`) that walks a per-run manifest and dispatches the next missing artifact's owning agent.
+This is the `inventing-new-solutions` branch — a leaner alternative to main's plan v2.2. The architecture is intentionally different:
 
-**v1 scope:** automated capture → scene analysis (event-log + visual) → on-screen captions → Gemini Lyria music (or fallback) → SFX (Kenney CC0 pack) → Remotion composition → MP4 → automated QA. **No voiceover** (v2).
+- **Single language Python** (no Node, no Remotion, no Zod codegen)
+- **libass + Playwright** for caption rendering
+- **Pydantic-only** schemas (JSON Schema is an exported artifact)
+- **One director agent** (not nine), heuristic v1 with LLM swap-in interface
+- **Telemetry rubric** instead of per-agent eval/refresh framework
 
-## Project status
+For the full state of this branch, read `.claude/lean/MEMORY.md` first. Decisions log: `.claude/lean/decisions.md`.
 
-**Planning.** Implementation plan at `.claude/plans/v2-implementation-plan.md`; under refinement via ultraplan. Phase -1 pre-flight decisions are tracked in `.claude/DECISIONS.md`. Phase status in `.claude/PM.md`.
+## What this tool does
+
+`dvg make-video <input>` turns a URL or video file into a production-grade demo MP4: 1080p, -14 LUFS YouTube-aligned mix, polished captions, mood-matched soundtrack.
+
+Pipeline: capture → analyze (DOM events + frame-diff) → director (single brain → composition.json) → compose (ffmpeg filter graph) → render → QA.
 
 ## Architecture summary
 
-- **Python (uv) + Typer CLI** — deterministic primitives (`dvg run`, `dvg capture`, `dvg analyze`, `dvg music`, `dvg sfx`, `dvg compose`, `dvg render`, `dvg review`)
-- **Remotion v4 (Node)** — composition layer in `remotion/`
-- **Schemas** — JSON Schema source-of-truth → codegen Pydantic + Zod (do NOT hand-edit `src/.../schemas/` or `remotion/src/schemas/`)
-- **Agents** — `.claude/agents/<name>/` with `agent.md` + `prompts/` + `knowledge/` + `evals/` + `refresh.md`
-- **Cross-agent knowledge** — `.claude/agents/_shared/`
-- **Per-run state** — `runs/<ts>/manifest.json` + artifacts; the driver advances by inspecting this
+- **Python 3.12 + uv + Typer CLI** — single language
+- **Composition** — Python timeline DSL → ffmpeg filter graph (`src/dvg/composition/`)
+- **Captions** — libass primary, Playwright HTML→PNG fallback for fancy moods
+- **Audio** — ffmpeg pre-mix (-14 LUFS / -1 dBTP); ducking via sidechain
+- **Per-run state** — `runs/<ts>/manifest.json` + artifacts; deterministic driver walks the DAG
+- **Schemas** — Pydantic models in `src/dvg/models.py`; JSON Schema export via `dvg schemas export`
 
 ## Working norms
 
-- Use the optimized-plan-orchestration skill before any multi-task plan
-- Do not skip phase entry/exit gates defined in the plan
-- Schema changes go through `make schemas` codegen — never edit generated files
-- Prompt revisions require eval comparison (rubric ≥ baseline AND judge ≥ baseline AND holdout ≥ baseline AND no individual case drops > 1 point)
-- The PM (Ashwin) signs off every phase exit in `.claude/PM.md`
+- Update `.claude/lean/MEMORY.md` at every decision and every hour
+- Decisions go in `.claude/lean/decisions.md` with brief why
+- Hourly worklog entries in `.claude/lean/worklog.md`
+- Out-of-scope ideas → `.claude/lean/ideas.md` (parking lot)
+- Push at every passing test or working slice + at least hourly
+- Soundtrack library: `/Users/ashwinchidambaram/dev/projects/wipro/demo/soundtracks/`
 
 ## Key files
 
-- `.claude/plans/v2-implementation-plan.md` — the plan (latest)
-- `.claude/DECISIONS.md` — architectural decisions (ADR-lite)
-- `.claude/PM.md` — phase status, blockers, retros
-- `.claude/worklog.md` — day-by-day work log (gitignored)
-- `.claude/agents/_template/` — skeleton for new agents
-- `.claude/agents/_shared/` — cross-agent knowledge
-- `schemas/*.schema.json` — single source of truth for inter-agent contracts
-- `Makefile` — `make schemas`, `make agents`, `make test`, `make eval`
+- `src/dvg/` — package source
+- `src/dvg/models.py` — Pydantic models (single source of schema truth)
+- `src/dvg/composition/` — timeline → ffmpeg compiler
+- `src/dvg/director/` — single agent that emits composition.json
+- `src/dvg/capture/` — Playwright-driven capture
+- `src/dvg/review/` — audio QA + telemetry rubric
+- `runs/<ts>/` — per-run artifacts
+- `runs/_telemetry.jsonl` — append-only telemetry across runs
+
+## Comparison with main
+
+`main` is shipping a 9-agent fleet with Remotion + dual codegen + per-agent eval rubrics. This branch trades all of that for a thinner, single-language pipeline. See `.claude/lean/decisions.md` for the side-by-side rationale.
