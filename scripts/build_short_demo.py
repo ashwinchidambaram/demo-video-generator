@@ -11,12 +11,15 @@ from dvg import (
     AudioLayer,
     CaptionLayer,
     Composition,
+    ImageLayer,
     Mood,
     TitleLayer,
     VideoLayer,
 )
 from dvg.capture import capture_url
 from dvg.models import Anchor as A
+
+LOGO = Path(__file__).parent.parent / "tests/fixtures/logo.png"
 
 ROOT = Path(__file__).parent.parent
 FIXTURE = ROOT / "tests/fixtures/site/index.html"
@@ -73,6 +76,17 @@ def main() -> None:
                 fade_in=0.3,
                 fade_out=0.3,
                 ken_burns=0.04,
+            ),
+            ImageLayer(
+                src=LOGO,
+                time=(2.0, 8.0),
+                anchor=A.TOP_RIGHT,
+                offset=(40, 40),
+                scale=0.4,
+                opacity=0.65,
+                fade_in=0.4,
+                fade_out=0.3,
+                z=5,
             ),
             CaptionLayer(
                 text="Capture any URL",

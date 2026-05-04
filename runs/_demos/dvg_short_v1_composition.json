@@ -59,6 +59,26 @@
       "id": null,
       "time": [
         2.0,
+        8.0
+      ],
+      "z": 5,
+      "opacity": 0.65,
+      "fade_in": 0.4,
+      "fade_out": 0.3,
+      "transform": null,
+      "kind": "image",
+      "src": "/Users/ashwinchidambaram/dev/projects/demo-video-generator/.worktrees/inventing-new-solutions/tests/fixtures/logo.png",
+      "anchor": "top-right",
+      "scale": 0.4,
+      "offset": [
+        40,
+        40
+      ]
+    },
+    {
+      "id": null,
+      "time": [
+        2.0,
         4.0
       ],
       "z": 0,

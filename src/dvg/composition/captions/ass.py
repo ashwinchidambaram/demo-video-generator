@@ -53,9 +53,9 @@ def _mood_preset(mood: Mood, theme: Theme) -> dict[str, object]:
         },
         Mood.EXPLAIN: {
             "font": theme.font_family,
-            "size": 44,
+            "size": 56,
             "color": theme.color_text,
-            "outline": 1.8,
+            "outline": 2.0,
             "shadow": 0.0,
             "bold": False,
             "italic": False,

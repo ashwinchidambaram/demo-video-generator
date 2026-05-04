@@ -364,7 +364,11 @@ def _resolve_position(layer: ImageLayer, comp: Composition) -> tuple[str, str]:
 def _anchor_to_xy(
     anchor: Anchor, w: int, h: int, offset: tuple[int, int]
 ) -> tuple[str, str]:
-    """Map anchor + offset to overlay x/y expressions referencing W,H,w,h."""
+    """Map anchor + offset to overlay x/y expressions.
+
+    Offset semantics: positive ox moves the layer INWARD from the anchor edge
+    (so for top-right, +ox is leftward; for bottom-left, +oy is upward).
+    """
     ox, oy = offset
     horiz = anchor.value.split("-")[1]
     vert = anchor.value.split("-")[0]
@@ -372,14 +376,14 @@ def _anchor_to_xy(
     if horiz == "left":
         x = f"{ox}"
     elif horiz == "right":
-        x = f"W-w-{-ox}"
+        x = f"W-w-{ox}"
     else:
         x = f"(W-w)/2+{ox}"
 
     if vert == "top":
         y = f"{oy}"
     elif vert == "bottom":
-        y = f"H-h-{-oy}"
+        y = f"H-h-{oy}"
     else:
         y = f"(H-h)/2+{oy}"
 

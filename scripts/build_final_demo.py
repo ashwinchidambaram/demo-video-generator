@@ -19,6 +19,7 @@ from dvg import (
     AudioLayer,
     CaptionLayer,
     Composition,
+    ImageLayer,
     Mood,
     TitleLayer,
     VideoLayer,
@@ -29,6 +30,7 @@ from dvg.models import Theme
 
 ROOT = Path(__file__).parent.parent
 FIXTURE = ROOT / "tests/fixtures/site/index.html"
+LOGO = ROOT / "tests/fixtures/logo.png"
 SOUNDTRACK = Path(
     "/Users/ashwinchidambaram/dev/projects/wipro/demo/soundtracks/vibe-edm.mp3"
 )
@@ -89,6 +91,18 @@ def main() -> None:
                 fade_in=0.5,
                 fade_out=0.4,
                 ken_burns=0.04,
+            ),
+            # Subtle watermark logo in top-right during footage
+            ImageLayer(
+                src=LOGO,
+                time=(3.0, 19.0),
+                anchor=A.TOP_RIGHT,
+                offset=(40, 40),
+                scale=0.4,
+                opacity=0.65,
+                fade_in=0.5,
+                fade_out=0.4,
+                z=5,
             ),
             # Narration captions over footage
             CaptionLayer(
