@@ -49,6 +49,10 @@ class DirectorContext:
     # Optional list of caption strings to use as beat narrations, in order.
     # If None, the heuristic uses generic narrations (no marketing copy).
     narrations: list[str] | None = None
+    # Optional brand pack override. If None, the director loads from
+    # $DVG_BRAND, ~/.config/dvg/brand.json, or ./brand.json.
+    # Typed as `object` to avoid an import cycle; runtime checks via isinstance.
+    brand: object | None = None
 
 
 # Map analysis anchor kinds → caption mood
@@ -167,8 +171,25 @@ def _resolve_cta(ctx: DirectorContext) -> str | None:
 
 
 def _build_theme(ctx: DirectorContext) -> Theme:
-    accent = ctx.brand_color or "#3b82f6"
-    return Theme(color_accent=accent)
+    """Build theme from brand pack + context overrides."""
+    from dvg.library.brand import BrandPack, load_default_brand
+
+    brand = ctx.brand if isinstance(ctx.brand, BrandPack) else load_default_brand()
+    overrides: dict[str, str] = {}
+    if brand:
+        if brand.color_text:
+            overrides["color_text"] = brand.color_text
+        if brand.color_text_dim:
+            overrides["color_text_dim"] = brand.color_text_dim
+        if brand.color_accent:
+            overrides["color_accent"] = brand.color_accent
+        if brand.color_background:
+            overrides["color_background"] = brand.color_background
+        if brand.font_family:
+            overrides["font_family"] = brand.font_family
+    if ctx.brand_color:
+        overrides["color_accent"] = ctx.brand_color
+    return Theme(**overrides) if overrides else Theme()
 
 
 # ---- soundtrack ---------------------------------------------------------
