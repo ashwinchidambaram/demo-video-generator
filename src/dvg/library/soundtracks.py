@@ -1,7 +1,14 @@
 """Soundtrack library — pick-by-tag from a directory of audio files.
 
-For v1 we hand-tag the 7 soundtracks in Ashwin's library by filename. Later
-we'll auto-tag using librosa (BPM, spectral centroid → mood).
+Library directory resolution order:
+1. Explicit path passed to `load_library()` / `pick_soundtrack()`
+2. `DVG_SOUNDTRACK_DIR` environment variable
+3. `~/.config/dvg/soundtracks/`
+4. `./soundtracks/` (next to cwd)
+5. The hardcoded fallback (Ashwin's local library)
+
+For v1 we hand-tag soundtracks by filename. Untagged files are loaded with
+neutral defaults (energy=0.5, mood='neutral'). Future: auto-tag via librosa.
 
 Tags:
 - energy: 0..1 (drives ducking depth, caption pacing)
@@ -13,13 +20,34 @@ Tags:
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-DEFAULT_LIBRARY_DIR = Path(
+_FALLBACK_LIBRARY_DIR = Path(
     "/Users/ashwinchidambaram/dev/projects/wipro/demo/soundtracks/"
 )
+
+
+def default_library_dir() -> Path:
+    """Resolve the soundtrack directory by env / xdg / fallback."""
+    env = os.environ.get("DVG_SOUNDTRACK_DIR")
+    if env:
+        p = Path(env)
+        if p.exists():
+            return p
+    xdg = Path.home() / ".config" / "dvg" / "soundtracks"
+    if xdg.exists():
+        return xdg
+    cwd = Path.cwd() / "soundtracks"
+    if cwd.exists():
+        return cwd
+    return _FALLBACK_LIBRARY_DIR
+
+
+# Backward-compat alias.
+DEFAULT_LIBRARY_DIR = default_library_dir()
 
 
 @dataclass
@@ -43,24 +71,36 @@ _TAGS: dict[str, dict[str, object]] = {
 }
 
 
-def load_library(dir_path: Path = DEFAULT_LIBRARY_DIR) -> list[Soundtrack]:
-    if not dir_path.exists():
+def load_library(dir_path: Path | None = None) -> list[Soundtrack]:
+    """Load all .mp3 files in `dir_path`. Untagged files get neutral defaults."""
+    resolved = dir_path or default_library_dir()
+    if not resolved.exists():
         return []
     out: list[Soundtrack] = []
-    for f in sorted(dir_path.glob("*.mp3")):
+    for f in sorted(resolved.glob("*.mp3")):
         tags = _TAGS.get(f.name)
-        if tags is None:
-            continue
         duration = _probe_duration(f)
-        out.append(
-            Soundtrack(
-                path=f,
-                energy=float(tags["energy"]),  # type: ignore[arg-type]
-                tempo_bpm=float(tags["tempo_bpm"]),  # type: ignore[arg-type]
-                mood=str(tags["mood"]),
-                duration_s=duration,
+        if tags is not None:
+            out.append(
+                Soundtrack(
+                    path=f,
+                    energy=float(tags["energy"]),  # type: ignore[arg-type]
+                    tempo_bpm=float(tags["tempo_bpm"]),  # type: ignore[arg-type]
+                    mood=str(tags["mood"]),
+                    duration_s=duration,
+                )
             )
-        )
+        else:
+            # untagged: neutral defaults so any user library still works
+            out.append(
+                Soundtrack(
+                    path=f,
+                    energy=0.5,
+                    tempo_bpm=110.0,
+                    mood="neutral",
+                    duration_s=duration,
+                )
+            )
     return out
 
 

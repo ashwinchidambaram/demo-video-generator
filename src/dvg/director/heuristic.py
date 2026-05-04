@@ -175,26 +175,15 @@ def _build_theme(ctx: DirectorContext) -> Theme:
 
 
 def _pick_soundtrack(ctx: DirectorContext) -> Soundtrack:
-    library = load_library(
-        ctx.soundtrack_library_dir
-        if ctx.soundtrack_library_dir is not None
-        else load_library.__defaults__[0]  # type: ignore[index]
-    )
+    library = load_library(ctx.soundtrack_library_dir)
     if not library:
-        # fallback — any file we can find
-        library_dir = ctx.soundtrack_library_dir or Path(
-            "/Users/ashwinchidambaram/dev/projects/wipro/demo/soundtracks/"
-        )
-        any_files = list(library_dir.glob("*.mp3"))
-        if not any_files:
-            raise RuntimeError(f"no soundtracks in {library_dir}")
-        # synthesize a default soundtrack
-        return Soundtrack(
-            path=any_files[0],
-            energy=0.6,
-            tempo_bpm=110,
-            mood="neutral",
-            duration_s=60.0,
+        from dvg.library.soundtracks import default_library_dir
+
+        library_dir = ctx.soundtrack_library_dir or default_library_dir()
+        raise RuntimeError(
+            f"No soundtracks found in {library_dir}. "
+            f"Drop .mp3 files there, set DVG_SOUNDTRACK_DIR, "
+            f"or pass --soundtrack-dir."
         )
 
     avg_energy = (
