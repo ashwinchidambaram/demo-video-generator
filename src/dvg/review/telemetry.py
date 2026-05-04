@@ -8,7 +8,6 @@ file replaces the per-agent eval framework from main's plan.
 
 from __future__ import annotations
 
-import json
 import time
 from collections import Counter
 from pathlib import Path

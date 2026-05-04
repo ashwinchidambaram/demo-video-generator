@@ -16,7 +16,8 @@ from dvg.analysis import analyze_events
 from dvg.capture import capture_url_sync
 from dvg.composition.render import plan as plan_composition
 from dvg.composition.render import render as render_composition
-from dvg.director import DirectorContext, plan_composition as director_plan
+from dvg.director import DirectorContext
+from dvg.director import plan_composition as director_plan
 from dvg.models import Composition
 
 app = typer.Typer(

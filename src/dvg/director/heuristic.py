@@ -17,7 +17,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlparse
 
-from dvg.analysis import Analysis, Anchor as EventAnchor
+from dvg.analysis import Analysis
+from dvg.analysis import Anchor as EventAnchor
 from dvg.library.soundtracks import Soundtrack, load_library, pick_soundtrack
 from dvg.models import (
     Anchor,

@@ -155,7 +155,7 @@ def _silent_stem_cmd(duration: float, out: Path) -> list[str]:
         "-f",
         "lavfi",
         "-i",
-        f"anullsrc=r=48000:cl=stereo",
+        "anullsrc=r=48000:cl=stereo",
         "-t",
         f"{duration:.3f}",
         "-c:a",

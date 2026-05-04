@@ -31,7 +31,7 @@ Scenario = Callable[["Page", ScenarioOptions], Awaitable[None]]
 # ---- built-ins ----------------------------------------------------------
 
 
-async def tour(page: "Page", options: ScenarioOptions) -> None:
+async def tour(page: Page, options: ScenarioOptions) -> None:
     """Default tour: scroll, pause, scroll-up, pause, click first CTA-ish element."""
     total = options.duration
     # phase 1: settle (5%)
@@ -120,7 +120,7 @@ async def tour(page: "Page", options: ScenarioOptions) -> None:
     await page.wait_for_timeout(int(total * 0.10 * 1000))
 
 
-async def idle(page: "Page", options: ScenarioOptions) -> None:
+async def idle(page: Page, options: ScenarioOptions) -> None:
     await page.wait_for_timeout(int(options.duration * 1000))
 
 

@@ -15,8 +15,8 @@ from typing import TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from dvg.easing import Easing, get as get_easing
-
+from dvg.easing import Easing
+from dvg.easing import get as get_easing
 
 T = TypeVar("T", float, tuple[float, float], tuple[float, float, float])
 

@@ -15,7 +15,7 @@ from __future__ import annotations
 import io
 from collections.abc import Iterable
 
-from dvg.models import Anchor, CaptionLayer, Composition, Mood, TitleLayer, Theme
+from dvg.models import Anchor, CaptionLayer, Composition, Mood, Theme, TitleLayer
 
 # numpad alignment per ASS spec
 _ANCHOR_TO_AN = {
