@@ -10,7 +10,6 @@ from dvg import (
     Composition,
     Mood,
     Sequence,
-    VideoLayer,
 )
 
 FIXTURE = Path(__file__).parents[1] / "fixtures/video/fixture_12s.mp4"

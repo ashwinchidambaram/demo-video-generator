@@ -8,9 +8,7 @@ from __future__ import annotations
 
 from enum import Enum
 from pathlib import Path
-from typing import Annotated, Literal, Self
-
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -205,7 +203,7 @@ class Sequence(_LayerBase):
     """
 
     kind: Literal["sequence"] = "sequence"
-    layers: list["Layer"] = Field(default_factory=list)
+    layers: list[Layer] = Field(default_factory=list)
     audio: list[AudioLayer] = Field(default_factory=list)
 
 
@@ -285,15 +283,14 @@ class Composition(BaseModel):
     title: str | None = None  # for metadata
     description: str | None = None
 
-    def render(self, out: str | Path, **kwargs: object) -> "RenderResultLike":
+    def render(self, out: str | Path, **kwargs: object) -> RenderResultLike:
         """Convenience: build → render. See dvg.composition.render.render()."""
         from dvg.composition.render import render
 
         return render(self, out, **kwargs)  # type: ignore[arg-type]
 
-    def flatten(self) -> "Composition":
+    def flatten(self) -> Composition:
         """Return a new Composition with all Sequences expanded inline."""
-        from copy import deepcopy
 
         flat_layers: list[Layer] = []
         flat_audio: list[AudioLayer] = list(self.audio)
