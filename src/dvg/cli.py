@@ -496,6 +496,17 @@ if __name__ == "__main__":
 """
 
 
+@app.command()
+def preview(
+    composition_path: Annotated[Path, typer.Argument(help="composition.json")],
+    port: Annotated[int, typer.Option("--port", "-p")] = 8765,
+) -> None:
+    """Open a local preview server with a scrubbable timeline."""
+    from dvg.preview.server import serve
+
+    serve(composition_path, port=port)
+
+
 @app.command(name="review")
 def review_cmd(
     path: Annotated[Path, typer.Argument(help="Path to MP4")],
