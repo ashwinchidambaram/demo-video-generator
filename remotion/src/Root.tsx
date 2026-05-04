@@ -1,10 +1,11 @@
 import React from "react";
 import { Composition } from "remotion";
 import { DemoVideo, Composition as CompositionData } from "./DemoVideo";
+import { DvgSelfDemo } from "./DvgSelfDemo";
 
-// Phase 1: Composition reads composition.json via inputProps + calculateMetadata
-// to derive durationInFrames/fps/resolution. The render bridge passes the
-// composition.json contents in inputProps.
+// Two compositions registered:
+// - DemoVideo: generic dvg pipeline output (consumes composition.json)
+// - DvgSelfDemo: hand-built self-demo of the dvg system (animated scenes)
 
 const PLACEHOLDER_COMPOSITION: CompositionData = {
   schema_version: 1,
@@ -32,24 +33,35 @@ const PLACEHOLDER_COMPOSITION: CompositionData = {
 
 export const RemotionRoot: React.FC = () => {
   return (
-    <Composition
-      id="DemoVideo"
-      component={DemoVideo}
-      durationInFrames={150}
-      fps={30}
-      width={1920}
-      height={1080}
-      defaultProps={{ composition: PLACEHOLDER_COMPOSITION }}
-      calculateMetadata={({ props }) => {
-        const c = (props as { composition?: CompositionData }).composition;
-        if (!c) return {};
-        return {
-          fps: c.fps,
-          width: c.resolution.width,
-          height: c.resolution.height,
-          durationInFrames: Math.max(1, Math.round(c.duration_seconds * c.fps)),
-        };
-      }}
-    />
+    <>
+      <Composition
+        id="DemoVideo"
+        component={DemoVideo}
+        durationInFrames={150}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={{ composition: PLACEHOLDER_COMPOSITION }}
+        calculateMetadata={({ props }) => {
+          const c = (props as { composition?: CompositionData }).composition;
+          if (!c) return {};
+          return {
+            fps: c.fps,
+            width: c.resolution.width,
+            height: c.resolution.height,
+            durationInFrames: Math.max(1, Math.round(c.duration_seconds * c.fps)),
+          };
+        }}
+      />
+      <Composition
+        id="DvgSelfDemo"
+        component={DvgSelfDemo}
+        durationInFrames={32 * 30}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={{ musicSrc: null, hasMusic: false }}
+      />
+    </>
   );
 };
