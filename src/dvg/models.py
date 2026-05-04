@@ -145,6 +145,14 @@ class CaptionLayer(_LayerBase):
     outline: float | None = None
     shadow: float | None = None
 
+    # Optional dark strip behind the caption for readability on busy footage.
+    # When true, render emits a drawbox at the caption's anchor edge before the
+    # ASS subtitles render on top.
+    backdrop: bool = False
+    backdrop_color: str = "#000000"
+    backdrop_opacity: float = Field(0.55, ge=0.0, le=1.0)
+    backdrop_height_px: int = Field(110, gt=0)
+
     # Anchor metadata (filled by director). Not used by renderer; for re-edit.
     anchor_event_id: str | None = None
     intent_duration: float | None = None

@@ -165,6 +165,31 @@ def render(
         )
         current_label = next_label
 
+    # Caption backdrop strips (drawbox behind any CaptionLayer with backdrop=True).
+    caption_layers = [layer for layer in comp.layers if isinstance(layer, CaptionLayer)]
+    backdrop_idx = 0
+    for cl in caption_layers:
+        if not cl.backdrop:
+            continue
+        # bottom strip by default; could derive from anchor in future
+        strip_h = cl.backdrop_height_px
+        anchor = cl.anchor
+        if anchor.value.startswith("bottom"):
+            y = comp.height - strip_h
+        elif anchor.value.startswith("top"):
+            y = 0
+        else:
+            y = (comp.height - strip_h) // 2
+        bg = _strip_hash(cl.backdrop_color)
+        next_label = f"[v_capbd_{backdrop_idx}]"
+        enable = f"enable='between(t,{cl.time[0]:.3f},{cl.time[1]:.3f})'"
+        filter_parts.append(
+            f"{current_label}drawbox=x=0:y={y}:w={comp.width}:h={strip_h}:"
+            f"color={bg}@{cl.backdrop_opacity:.2f}:t=fill:{enable}{next_label}"
+        )
+        current_label = next_label
+        backdrop_idx += 1
+
     # Shape layers — drawbox for rect (filled or stroked).
     shape_layers = [layer for layer in comp.layers if isinstance(layer, ShapeLayer)]
     for sl in shape_layers:
