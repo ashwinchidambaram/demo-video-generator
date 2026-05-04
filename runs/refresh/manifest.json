@@ -1,50 +1,50 @@
 {
   "schema_version": 1,
-  "last_run": "2026-05-04T07:05:07.519744+00:00",
+  "last_run": "2026-05-04T07:11:52.309708+00:00",
   "agents": {
     "caption-writer": {
       "freshness_target_days": 90,
-      "last_refresh": "2026-05-04T07:05:07.518603+00:00",
+      "last_refresh": "2026-05-04T07:11:52.308648+00:00",
       "staleness_days": 0
     },
     "composition-director": {
       "freshness_target_days": 90,
-      "last_refresh": "2026-05-04T07:05:07.518603+00:00",
+      "last_refresh": "2026-05-04T07:11:52.308648+00:00",
       "staleness_days": 0
     },
     "event-log-analyst": {
       "freshness_target_days": 90,
-      "last_refresh": "2026-05-04T07:05:07.518603+00:00",
+      "last_refresh": "2026-05-04T07:11:52.308648+00:00",
       "staleness_days": 0
     },
     "footage-capture": {
       "freshness_target_days": 90,
-      "last_refresh": "2026-05-04T07:05:07.518603+00:00",
+      "last_refresh": "2026-05-04T07:11:52.308648+00:00",
       "staleness_days": 0
     },
     "knowledge-curator": {
       "freshness_target_days": 90,
-      "last_refresh": "2026-05-04T07:05:07.518603+00:00",
+      "last_refresh": "2026-05-04T07:11:52.308648+00:00",
       "staleness_days": 0
     },
     "music-prompt-engineer": {
       "freshness_target_days": 90,
-      "last_refresh": "2026-05-04T07:05:07.518603+00:00",
+      "last_refresh": "2026-05-04T07:11:52.308648+00:00",
       "staleness_days": 0
     },
     "qa-reviewer": {
       "freshness_target_days": 90,
-      "last_refresh": "2026-05-04T07:05:07.519744+00:00",
+      "last_refresh": "2026-05-04T07:11:52.309708+00:00",
       "staleness_days": 0
     },
     "sfx-curator": {
       "freshness_target_days": 90,
-      "last_refresh": "2026-05-04T07:05:07.518603+00:00",
+      "last_refresh": "2026-05-04T07:11:52.308648+00:00",
       "staleness_days": 0
     },
     "visual-analyst": {
       "freshness_target_days": 90,
-      "last_refresh": "2026-05-04T07:05:07.518603+00:00",
+      "last_refresh": "2026-05-04T07:11:52.308648+00:00",
       "staleness_days": 0
     }
   }
