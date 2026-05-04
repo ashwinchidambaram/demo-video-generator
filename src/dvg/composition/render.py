@@ -60,6 +60,8 @@ def render(
     keep_intermediates: bool = False,
 ) -> RenderResult:
     """Render composition to MP4. Returns a RenderResult with measurements."""
+    # Flatten Sequence layers before rendering.
+    comp = comp.flatten()
     out_path = Path(out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     work = work_dir or out_path.parent / f".{out_path.stem}_work"

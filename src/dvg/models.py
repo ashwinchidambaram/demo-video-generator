@@ -188,8 +188,30 @@ class HTMLLayer(_LayerBase):
     fps_override: int | None = None
 
 
+class Sequence(_LayerBase):
+    """A nested composition: contains layers with their own timeline.
+
+    Child layer times are RELATIVE to this Sequence's start. At render time,
+    Sequence is flattened into the parent: each child's time is shifted by the
+    Sequence start, and the children are appended to the parent layer list.
+
+    Sequences can nest. Their own `time` (start, end) clamps the inner span;
+    children outside that range are dropped.
+    """
+
+    kind: Literal["sequence"] = "sequence"
+    layers: list["Layer"] = Field(default_factory=list)
+    audio: list[AudioLayer] = Field(default_factory=list)
+
+
 Layer = Annotated[
-    VideoLayer | ImageLayer | CaptionLayer | TitleLayer | ShapeLayer | HTMLLayer,
+    VideoLayer
+    | ImageLayer
+    | CaptionLayer
+    | TitleLayer
+    | ShapeLayer
+    | HTMLLayer
+    | Sequence,
     Field(discriminator="kind"),
 ]
 
@@ -264,12 +286,80 @@ class Composition(BaseModel):
 
         return render(self, out, **kwargs)
 
+    def flatten(self) -> "Composition":
+        """Return a new Composition with all Sequences expanded inline."""
+        from copy import deepcopy
+
+        flat_layers: list[Layer] = []
+        flat_audio: list[AudioLayer] = list(self.audio)
+        _flatten_into(self.layers, flat_layers, flat_audio, time_offset=0.0)
+        out = self.model_copy(update={"layers": flat_layers, "audio": flat_audio})
+        return out
+
     def save(self, path: str | Path) -> None:
         Path(path).write_text(self.model_dump_json(indent=2))
 
     @classmethod
     def load(cls, path: str | Path) -> Composition:
         return cls.model_validate_json(Path(path).read_text())
+
+
+# ---- Sequence flattening ------------------------------------------------
+
+
+def _flatten_into(
+    layers: list[Layer],
+    out_layers: list[Layer],
+    out_audio: list[AudioLayer],
+    *,
+    time_offset: float,
+) -> None:
+    """Recursively expand Sequence layers into a flat list."""
+    for layer in layers:
+        if isinstance(layer, Sequence):
+            seq_start, seq_end = layer.time
+            shift = time_offset + seq_start
+            # recurse: children get their times shifted by `shift`, and clamped
+            # to the sequence's (start, end) window.
+            for child in layer.layers:
+                shifted_child = _shift_and_clip(
+                    child, shift=shift, clamp=(time_offset + seq_start, time_offset + seq_end)
+                )
+                if shifted_child is not None:
+                    if isinstance(shifted_child, Sequence):
+                        _flatten_into(
+                            [shifted_child], out_layers, out_audio, time_offset=0.0
+                        )
+                    else:
+                        out_layers.append(shifted_child)
+            for audio in layer.audio:
+                end = audio.time[1] if audio.time[1] != -1 else (seq_end - seq_start)
+                shifted_a = audio.model_copy(
+                    update={"time": (audio.time[0] + shift, end + shift)}
+                )
+                out_audio.append(shifted_a)
+        else:
+            shifted = _shift_and_clip(layer, shift=time_offset, clamp=None)
+            if shifted is not None:
+                out_layers.append(shifted)
+
+
+def _shift_and_clip(
+    layer: Layer,
+    *,
+    shift: float,
+    clamp: tuple[float, float] | None,
+) -> Layer | None:
+    """Return a copy of layer with time shifted by `shift` and clamped to `clamp`."""
+    s = layer.time[0] + shift
+    e = layer.time[1] + shift
+    if clamp is not None:
+        c0, c1 = clamp
+        s = max(s, c0)
+        e = min(e, c1)
+        if e <= s:
+            return None
+    return layer.model_copy(update={"time": (s, e)})
 
 
 # ---- Manifest (driver state) --------------------------------------------
