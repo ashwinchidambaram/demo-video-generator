@@ -35,6 +35,7 @@ def run_cmd(
     input: str = typer.Argument(..., help="URL, video path, or 'screen'"),
     runs_root: Path = typer.Option(Path("runs"), "--runs-root"),
     from_stage: str | None = typer.Option(None, "--from", help="Invalidate this stage and downstream, then re-run."),
+    skip_render: bool = typer.Option(False, "--skip-render", help="Skip render + review stages (CI / no-browser environments)."),
 ) -> None:
     """Deterministic driver: walks manifest, dispatches missing-artifact agents."""
     if input.startswith(("http://", "https://")):
@@ -74,15 +75,16 @@ def run_cmd(
         run_id = run_mod.make_run_id()
         run_dir = run_mod.init_run_dir(runs_root, run_id, kind, input)
 
-    result = run_mod.dispatch(run_dir, from_stage=from_stage, dry_run=True)
+    result = run_mod.dispatch(run_dir, from_stage=from_stage, skip_render=skip_render)
     console.print(f"[bold]run dir:[/] {result.run_dir}")
+    console.print(f"[green]completed:[/] {result.completed}")
+    if result.skipped:
+        console.print(f"[yellow]skipped:[/] {result.skipped}")
+    if result.error:
+        console.print(f"[red]error:[/] {result.error}")
+        raise typer.Exit(1)
     if result.final_artifact:
         console.print(f"[green]final:[/] {result.final_artifact}")
-    else:
-        console.print(
-            "[yellow]Phase 0 driver: no agents wired yet. "
-            "Phase 1 stubs the agent dispatch.[/]"
-        )
 
 
 def main() -> None:

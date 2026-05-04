@@ -5,12 +5,13 @@
   "description": "Remotion v4 composition layer for demo-video-generator.",
   "scripts": {
     "preview": "remotion studio src/Root.tsx",
-    "render": "remotion render src/Root.tsx DemoVideo out/video.mp4",
+    "render": "tsx src/render.ts",
     "gen-schemas": "json-schema-to-zod -i ../schemas/composition.schema.json -o src/schemas/composition.zod.ts && json-schema-to-zod -i ../schemas/captions.schema.json -o src/schemas/captions.zod.ts && json-schema-to-zod -i ../schemas/analysis.schema.json -o src/schemas/analysis.zod.ts && json-schema-to-zod -i ../schemas/manifest.schema.json -o src/schemas/manifest.zod.ts && json-schema-to-zod -i ../schemas/error.schema.json -o src/schemas/error.zod.ts",
     "format:check": "prettier --check 'src/**/*.{ts,tsx}'",
     "format": "prettier --write 'src/**/*.{ts,tsx}'"
   },
   "dependencies": {
+    "@remotion/bundler": "^4.0.0",
     "@remotion/cli": "^4.0.0",
     "@remotion/renderer": "^4.0.0",
     "react": "^18.3.1",
@@ -19,9 +20,11 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "@types/react": "^18.3.0",
     "json-schema-to-zod": "^2.4.0",
     "prettier": "^3.3.0",
+    "tsx": "^4.19.0",
     "typescript": "^5.5.0"
   }
 }
