@@ -40,6 +40,9 @@ runs/refresh/*
 !runs/refresh/manifest.json
 .claude/worklog.md
 
+# Remotion render bridge stages per-run media here (cleaned after each run)
+remotion/public/2*/
+
 # Codegen output (regenerated via `make schemas`)
 src/demo_video_generator/schemas/*.py
 !src/demo_video_generator/schemas/__init__.py
