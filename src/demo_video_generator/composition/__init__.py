@@ -104,7 +104,11 @@ def stub_compose(
         "resolution": resolution,
         "footage": {"src": footage_path.name, "trim_before": 0},
         "audio": {
-            "music": {"src": music_path.name, "gain_db": 0},
+            # Phase 6 stub: pre-attenuate music by 1 dB so the rendered mix
+            # lands at ~-14 LUFS integrated with true peak <= -1 dBTP per D9.
+            # Real composition-director (Phase 6.5+) reads audio_qa.json and
+            # tunes gain per-soundtrack via the audio QA toolkit.
+            "music": {"src": music_path.name, "gain_db": -1},
             "sfx": sfx_placements,
             "mix": {
                 "integrated_lufs": -14,

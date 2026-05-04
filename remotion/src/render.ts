@@ -42,10 +42,24 @@ async function main() {
   const musicPath = path.join(runDir, compositionData.audio?.music?.src ?? "");
   const hasMusic = fs.existsSync(musicPath) && fs.statSync(musicPath).size > 1024;
 
-  // Stage run-dir media into remotion/public/<runId>/ so staticFile() can serve
-  // them. Remotion v4 doesn't accept file:// URLs; assets must live under public/.
-  // We symlink (cheap) for sources >1KB; cleanup happens after render.
-  const publicRunDir = path.resolve(__dirname, "..", "public", runId);
+  // Stage run-dir media into remotion/public/<runId>/ so staticFile() can
+  // serve them. Remotion v4 doesn't accept file:// URLs; assets must live
+  // under public/. Clean the entire public/ root first to avoid stale
+  // entries from previous runs polluting the bundle.
+  const publicRoot = path.resolve(__dirname, "..", "public");
+  if (fs.existsSync(publicRoot)) {
+    for (const entry of fs.readdirSync(publicRoot)) {
+      const full = path.join(publicRoot, entry);
+      try {
+        fs.rmSync(full, { recursive: true, force: true });
+      } catch {
+        // best-effort
+      }
+    }
+  } else {
+    fs.mkdirSync(publicRoot, { recursive: true });
+  }
+  const publicRunDir = path.resolve(publicRoot, runId);
   fs.mkdirSync(publicRunDir, { recursive: true });
   const stagedAssets: string[] = [];
   const linkAsset = (relPath: string) => {

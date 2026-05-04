@@ -145,35 +145,32 @@ def analyze_events_driven(events_log: dict[str, Any]) -> dict[str, Any]:
         for ev in raw_events
     ]
 
-    # Synthesize three anchor events when input has none, so downstream
-    # stubs (caption-writer, sfx-curator) have something to anchor on.
+    # Synthesize anchor events when input has none, so downstream stubs
+    # (caption-writer, sfx-curator) have something to anchor on. Anchor
+    # density scales with duration: roughly one anchor per 4 seconds, with
+    # a minimum of 3 (start / mid / end) and a maximum of 8 (eval cap).
     if not events_out:
-        events_out = [
-            {
-                "id": "evt-1",
-                "t": 1.0,
-                "kind": "navigation",
-                "selector": None,
-                "label": "demo start",
-                "payload": {},
-            },
-            {
-                "id": "evt-2",
-                "t": duration / 2,
-                "kind": "click",
-                "selector": "button[type=submit]",
-                "label": "primary action",
-                "payload": {},
-            },
-            {
-                "id": "evt-3",
-                "t": max(duration - 1.0, duration / 2 + 1.0),
-                "kind": "modal_close",
-                "selector": None,
-                "label": "demo end",
-                "payload": {},
-            },
-        ]
+        target_count = max(3, min(8, int(duration / 4)))
+        events_out = []
+        for i in range(target_count):
+            # Distribute anchors uniformly across [0.5, duration - 0.5].
+            t = 0.5 + (duration - 1.0) * (i / max(1, target_count - 1))
+            kind = "navigation" if i == 0 else "modal_close" if i == target_count - 1 else "click"
+            label = (
+                "demo start" if i == 0
+                else "demo end" if i == target_count - 1
+                else f"step {i}"
+            )
+            events_out.append(
+                {
+                    "id": f"evt-{i + 1}",
+                    "t": round(t, 2),
+                    "kind": kind,
+                    "selector": "button[type=submit]" if kind == "click" else None,
+                    "label": label,
+                    "payload": {},
+                }
+            )
 
     return {
         "schema_version": 1,

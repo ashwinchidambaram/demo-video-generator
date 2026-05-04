@@ -128,10 +128,16 @@ def stub_capture(input_kind: str, input_value: str, out_dir: Path) -> dict[str, 
 
     - `video` → Phase 2 file-ingest path.
     - `url` / `screen` → synthetic placeholder (Phase 2.5 gated on ffmpeg + TCC).
+
+    Synthetic mode honors DVG_DURATION env var (seconds) for tunable demo
+    length without a real capture.
     """
+    import os as _os
+
     if input_kind == "video":
         return capture_file(Path(input_value), out_dir)
-    return capture_synthetic(out_dir, duration_seconds=10.0)
+    duration = float(_os.environ.get("DVG_DURATION", "10"))
+    return capture_synthetic(out_dir, duration_seconds=duration)
 
 
 def cli(input_kind: str, input_value: str, out: str) -> str:

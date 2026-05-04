@@ -1,0 +1,18 @@
+{
+  "title": "demo-video-generator",
+  "explainers": [
+    "9 specialized agents.",
+    "One deterministic driver.",
+    "Schemas as the source of truth."
+  ],
+  "callouts": [
+    {
+      "text": "<- music: ingested, not generated",
+      "anchor_event_idx": 1,
+      "intent_duration": 2.5,
+      "priority": 3
+    }
+  ],
+  "punchline": "Built end-to-end.",
+  "tagline": "demo-video-generator. Just press play."
+}
