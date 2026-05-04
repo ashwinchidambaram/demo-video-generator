@@ -167,10 +167,39 @@ def next_pending(manifest: dict[str, Any], run_dir: Path) -> StageView | None:
     return None
 
 
+def _clear_stage_artifact(stage: dict[str, Any], run_dir: Path) -> None:
+    """Remove a stage's artifact (and sibling files for directory-artifact
+    stages like sfx)."""
+    artifact_path = run_dir / stage["artifact"]
+    if artifact_path.is_file():
+        artifact_path.unlink()
+    if "/" in stage["artifact"]:
+        stage_dir = (run_dir / stage["artifact"]).parent
+        if stage_dir.is_dir():
+            for child in stage_dir.iterdir():
+                if child.is_file():
+                    child.unlink()
+
+
+def _reset_stage(stage: dict[str, Any]) -> None:
+    """Reset a stage's run-state fields (preserves attempts counter)."""
+    stage["status"] = "pending"
+    stage["started_at"] = None
+    stage["finished_at"] = None
+    stage["duration_seconds"] = None
+    stage["error"] = None
+    stage["artifact_sha256"] = None
+
+
 def invalidate(manifest: dict[str, Any], target: str, run_dir: Path) -> list[str]:
     """Mark ``target`` and all downstream stages pending; remove their artifacts.
 
     Returns the list of stage names invalidated (target + cascading downstream).
+
+    NB: this is the "structural" invalidation that conservatively clears the
+    full downstream cone. The driver's content-aware re-run path (D17)
+    uses ``invalidate_target_only`` + ``cascade_if_changed`` for the
+    skip-when-unchanged case.
     """
     cascading = downstream_of(manifest, target)
     invalidated = [target, *cascading]
@@ -178,22 +207,53 @@ def invalidate(manifest: dict[str, Any], target: str, run_dir: Path) -> list[str
         stage = find_stage(manifest, name)
         if stage is None:
             continue
-        artifact_path = run_dir / stage["artifact"]
-        if artifact_path.is_file():
-            artifact_path.unlink()
-        # Stages whose artifact lives in a sibling directory (sfx writes
-        # manifest.json + sibling .wav files) need recursive cleanup. The
-        # convention: if the artifact is `<dir>/manifest.json`, clear all
-        # siblings in `<dir>/` except the directory itself.
-        if "/" in stage["artifact"]:
-            stage_dir = (run_dir / stage["artifact"]).parent
-            if stage_dir.is_dir():
-                for child in stage_dir.iterdir():
-                    if child.is_file():
-                        child.unlink()
-        stage["status"] = "pending"
-        stage["started_at"] = None
-        stage["finished_at"] = None
-        stage["duration_seconds"] = None
-        stage["error"] = None
+        _clear_stage_artifact(stage, run_dir)
+        _reset_stage(stage)
     return invalidated
+
+
+def invalidate_target_only(manifest: dict[str, Any], target: str, run_dir: Path) -> str | None:
+    """D17 step 1: clear ONLY the target stage so the driver can re-run it.
+
+    Captures the target's prior `artifact_sha256` so the post-run cascade
+    decision can compare. Returns the prior hash (or None if the stage
+    hadn't run).
+    """
+    stage = find_stage(manifest, target)
+    if stage is None:
+        return None
+    prior_hash = stage.get("artifact_sha256")
+    _clear_stage_artifact(stage, run_dir)
+    _reset_stage(stage)
+    return prior_hash
+
+
+def cascade_if_changed(
+    manifest: dict[str, Any],
+    target: str,
+    run_dir: Path,
+    *,
+    prior_hash: str | None,
+) -> list[str]:
+    """D17 step 2: invoked AFTER the target stage has been re-run. If the
+    new artifact hash matches the prior hash, downstream stages are
+    preserved (their artifacts remain valid). Otherwise downstream is
+    structurally invalidated.
+
+    Returns the list of downstream stages that ended up invalidated
+    (empty when the hashes matched and the cone was preserved).
+    """
+    stage = find_stage(manifest, target)
+    if stage is None:
+        return []
+    new_hash = stage.get("artifact_sha256")
+    if prior_hash is not None and new_hash is not None and prior_hash == new_hash:
+        return []
+    cascading = downstream_of(manifest, target)
+    for name in cascading:
+        s = find_stage(manifest, name)
+        if s is None:
+            continue
+        _clear_stage_artifact(s, run_dir)
+        _reset_stage(s)
+    return cascading

@@ -38,6 +38,23 @@ from .sfx import stub_sfx
 console = Console()
 
 
+# Hard-allowlist of qa.json issue codes the driver may auto-retry without
+# user intervention (per ultraplan R3 / qa-reviewer agent design). Codes
+# outside this set escalate to the user even if proposed_action says
+# regenerate_stage. This mirrors the agent design's "scope creep into
+# fixes" safeguard.
+AUTO_RETRY_ALLOWLIST: frozenset[str] = frozenset(
+    {
+        "MUSIC_BPM_OFF_TARGET",
+        "MIX_TRUEPEAK_EXCEEDED",
+        "MIX_LUFS_OFF_TARGET",
+        "CAPTION_OUT_OF_FRAME",
+        "DEAD_AIR",
+        "FINAL_MP4_MISSING",
+    }
+)
+
+
 @dataclass(slots=True)
 class RunResult:
     run_dir: Path
@@ -45,6 +62,7 @@ class RunResult:
     skipped: list[str]
     final_artifact: Path | None
     error: str | None = None
+    auto_retried: list[str] | None = None
 
 
 def make_run_id() -> str:
@@ -171,10 +189,20 @@ def dispatch(
     manifest_path = run_dir / "manifest.json"
     manifest = mf.load(manifest_path)
 
+    # D17 content-aware --from: clear ONLY the target; downstream cascading
+    # decision happens after the target re-runs (depending on whether the new
+    # artifact_sha256 matches the prior).
+    pending_cascade_target: str | None = None
+    pending_cascade_prior_hash: str | None = None
     if from_stage is not None:
-        invalidated = mf.invalidate(manifest, from_stage, run_dir)
+        pending_cascade_prior_hash = mf.invalidate_target_only(
+            manifest, from_stage, run_dir
+        )
+        pending_cascade_target = from_stage
         write_json_atomic(manifest_path, manifest)
-        console.print(f"[yellow]--from {from_stage}: invalidated {invalidated}[/]")
+        console.print(
+            f"[yellow]--from {from_stage}: cleared target; downstream cascade decided post-run by hash[/]"
+        )
 
     completed: list[str] = []
     skipped: list[str] = []
@@ -224,8 +252,90 @@ def dispatch(
             break
         finished = time.time()
         _record_stage_result(manifest, view.name, started=started, finished=finished, run_dir=run_dir)
+        # D17 cascade-if-changed: if this stage was the --from target and its
+        # new artifact hash matches the prior, downstream artifacts are kept.
+        if pending_cascade_target is not None and view.name == pending_cascade_target:
+            cascaded = mf.cascade_if_changed(
+                manifest,
+                pending_cascade_target,
+                run_dir,
+                prior_hash=pending_cascade_prior_hash,
+            )
+            if cascaded:
+                console.print(
+                    f"[yellow]content changed: cascade invalidated {cascaded}[/]"
+                )
+            else:
+                console.print(
+                    "[green]content unchanged: downstream artifacts preserved[/]"
+                )
+            pending_cascade_target = None
+            pending_cascade_prior_hash = None
         write_json_atomic(manifest_path, manifest)
         completed.append(view.name)
+
+    # Phase 8 auto-retry per allowlist: if review just landed and qa.json has
+    # a high-severity allowlisted issue proposing regenerate_stage, re-dispatch
+    # that stage exactly once.
+    auto_retried: list[str] = []
+    qa_path = run_dir / "qa.json"
+    if (
+        not error
+        and "review" in completed
+        and qa_path.is_file()
+    ):
+        try:
+            qa_doc = __import__("json").loads(qa_path.read_text())
+        except Exception:
+            qa_doc = {}
+        for issue in qa_doc.get("issues", []):
+            if issue.get("severity") != "high":
+                continue
+            code = issue.get("code", "")
+            if code not in AUTO_RETRY_ALLOWLIST:
+                continue
+            action = issue.get("proposed_action", {})
+            if action.get("kind") != "regenerate_stage":
+                continue
+            target = action.get("target_stage")
+            if not target or target in auto_retried:
+                continue
+            target_stage = mf.find_stage(manifest, target)
+            attempts = (target_stage or {}).get("attempts", 0) or 0
+            if attempts >= 2:  # one retry budget per stage per run
+                continue
+            console.print(
+                f"[yellow]auto-retry[/] qa flagged {code} → re-dispatching {target}"
+            )
+            # Invalidate the target + its downstream so the re-run flows.
+            mf.invalidate(manifest, target, run_dir)
+            write_json_atomic(manifest_path, manifest)
+            auto_retried.append(target)
+            # Walk forward from the invalidated target through to review again.
+            while True:
+                view = mf.next_pending(manifest, run_dir)
+                if view is None:
+                    break
+                handler = _DISPATCHERS.get(view.name)
+                if handler is None:
+                    break
+                console.print(
+                    f"[cyan]dispatch[/] {view.owner} → [bold]{view.name}[/] (retry)"
+                )
+                started = time.time()
+                try:
+                    handler(run_dir, manifest)
+                except Exception as e:
+                    console.print(f"[red]{view.name} retry failed:[/] {e}")
+                    error = str(e)
+                    break
+                finished = time.time()
+                _record_stage_result(
+                    manifest, view.name, started=started, finished=finished, run_dir=run_dir
+                )
+                write_json_atomic(manifest_path, manifest)
+                completed.append(view.name)
+            break  # one auto-retry per run
 
     # Aggregate cost / duration summary into manifest (Phase 9 polish).
     total_cost = 0.0
@@ -250,6 +360,7 @@ def dispatch(
         skipped=skipped,
         final_artifact=final if final.exists() else None,
         error=error,
+        auto_retried=auto_retried or None,
     )
 
 
