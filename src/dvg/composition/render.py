@@ -33,6 +33,7 @@ from dvg.models import (
     Fit,
     HTMLLayer,
     ImageLayer,
+    ShapeLayer,
     TitleLayer,
     VideoLayer,
 )
@@ -161,6 +162,25 @@ def render(
         enable = f"enable='between(t,{il.time[0]:.3f},{il.time[1]:.3f})'"
         filter_parts.append(
             f"{current_label}{out_label}overlay=x='{x_expr}':y='{y_expr}':{enable}{next_label}"
+        )
+        current_label = next_label
+
+    # Shape layers — drawbox for rect (filled or stroked).
+    shape_layers = [layer for layer in comp.layers if isinstance(layer, ShapeLayer)]
+    for sl in shape_layers:
+        if sl.shape != "rect":
+            # Other shapes (circle, line, rounded_rect) require Pillow pre-render.
+            # Defer to a future iteration.
+            continue
+        x, y, w, h = sl.bbox
+        fill = sl.fill or "white"
+        fill_arg = _strip_hash(fill)
+        thickness = "fill" if sl.stroke_width <= 0 else f"{sl.stroke_width}"
+        enable = f"enable='between(t,{sl.time[0]:.3f},{sl.time[1]:.3f})'"
+        next_label = f"[v_shape_{shape_layers.index(sl)}]"
+        filter_parts.append(
+            f"{current_label}drawbox=x={x}:y={y}:w={w}:h={h}:"
+            f"color={fill_arg}@{sl.opacity:.2f}:t={thickness}:{enable}{next_label}"
         )
         current_label = next_label
 
